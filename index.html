@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -299,6 +298,8 @@
         {
           id: 1,
           group: 'G',
+          codeHome: 'eg',
+          codeAway: 'ir',
           flagHome: '🇪🇬',
           flagAway: '🇮🇷',
           title: '이집트 vs 이란',
@@ -314,6 +315,8 @@
         {
           id: 2,
           group: 'H',
+          codeHome: 'es',
+          codeAway: 'uy',
           flagHome: '🇪🇸',
           flagAway: '🇺🇾',
           title: '스페인 vs 우루과이',
@@ -329,6 +332,8 @@
         {
           id: 3,
           group: 'I',
+          codeHome: 'sn',
+          codeAway: 'iq',
           flagHome: '🇸🇳',
           flagAway: '🇮🇶',
           title: '세네갈 vs 이라크',
@@ -344,6 +349,8 @@
         {
           id: 4,
           group: 'J',
+          codeHome: 'at',
+          codeAway: 'dz',
           flagHome: '🇦🇹',
           flagAway: '🇩🇿',
           title: '오스트리아 vs 알제리',
@@ -359,6 +366,8 @@
         {
           id: 5,
           group: 'K',
+          codeHome: 'cd',
+          codeAway: 'uz',
           flagHome: '🇨🇩',
           flagAway: '🇺🇿',
           title: 'DR콩고 vs 우즈베키스탄',
@@ -374,6 +383,8 @@
         {
           id: 6,
           group: 'L',
+          codeHome: 'gh',
+          codeAway: 'hr',
           flagHome: '🇬🇭',
           flagAway: '🇭🇷',
           title: '가나 vs 크로아티아',
@@ -534,12 +545,12 @@
     // 12개조 3위 가상 순위표 연산 및 소팅 정렬
     function calculateStandings() {
       const baseTeams = [
-        { id: 'KOR', name: '대한민국 🇰🇷', group: 'A', pts: 3, gd: -1, desc: 'A조 최종' },
-        { id: 'BIH', name: '보스니아 🇧🇦', group: 'B', pts: 4, gd: 0, desc: 'B조 최종' },
-        { id: 'SCO', name: '스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C', pts: 3, gd: -3, desc: 'C조 (한국 우세)' },
-        { id: 'PRY', name: '파라과이 🇵🇾', group: 'D', pts: 4, gd: -1, desc: 'D조 최종' },
-        { id: 'ECU', name: '에콰도르 🇪🇨', group: 'E', pts: 4, gd: 0, desc: 'E조 최종' },
-        { id: 'SWE', name: '스웨덴 🇸🇪', group: 'F', pts: 4, gd: 1, desc: 'F조 최종' },
+        { id: 'KOR', name: '대한민국', code: 'kr', flag: '🇰🇷', group: 'A', pts: 3, gd: -1, desc: 'A조 최종' },
+        { id: 'BIH', name: '보스니아 🇧🇦', code: 'ba', flag: '🇧🇦', group: 'B', pts: 4, gd: 0, desc: 'B조 최종' },
+        { id: 'SCO', name: '스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿', code: 'gb-sct', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C', pts: 3, gd: -3, desc: 'C조 (한국 우세)' },
+        { id: 'PRY', name: '파라과이 🇵🇾', code: 'py', flag: '🇵🇾', group: 'D', pts: 4, gd: -1, desc: 'D조 최종' },
+        { id: 'ECU', name: '에콰도르 🇪🇨', code: 'ec', flag: '🇪🇨', group: 'E', pts: 4, gd: 0, desc: 'E조 최종' },
+        { id: 'SWE', name: '스웨덴 🇸🇪', code: 'se', flag: '🇸🇪', group: 'F', pts: 4, gd: 1, desc: 'F조 최종' },
       ];
 
       const statusG = getActiveStatusAtSelectedTime('G');
@@ -549,46 +560,46 @@
       const statusK = getActiveStatusAtSelectedTime('K');
       const statusL = getActiveStatusAtSelectedTime('L');
 
-      let teamG = { id: 'G', name: 'G조 3위 (이란/벨기에)', group: 'G', pts: 3, gd: 0, desc: '대기 중' };
+      let teamG = { id: 'G', name: 'G조 3위 (이란/벨기에)', code: '', flag: '❓', group: 'G', pts: 3, gd: 0, desc: '대기 중' };
       if (statusG === 'success') {
-        teamG = { id: 'G', name: '이란 🇮🇷', group: 'G', pts: 2, gd: -2, desc: '이란 패배' };
+        teamG = { id: 'G', name: '이란', code: 'ir', flag: '🇮🇷', group: 'G', pts: 2, gd: -2, desc: '이란 패배' };
       } else if (statusG === 'fail') {
-        teamG = { id: 'G', name: '벨기에 🇧🇪', group: 'G', pts: 4, gd: 0, desc: '이란 선전' };
+        teamG = { id: 'G', name: '벨기에', code: 'be', flag: '🇧🇪', group: 'G', pts: 4, gd: 0, desc: '이란 무승부 이상' };
       }
 
-      let teamH = { id: 'H', name: 'H조 3위 (우루과이)', group: 'H', pts: 3, gd: 0, desc: '대기 중' };
+      let teamH = { id: 'H', name: 'H조 3위 (우루과이)', code: '', flag: '❓', group: 'H', pts: 3, gd: 0, desc: '대기 중' };
       if (statusH === 'success') {
-        teamH = { id: 'H', name: '우루과이 🇺🇾', group: 'H', pts: 2, gd: -2, desc: '우루과이 패배' };
+        teamH = { id: 'H', name: '우루과이', code: 'uy', flag: '🇺🇾', group: 'H', pts: 2, gd: -2, desc: '우루과이 패배' };
       } else if (statusH === 'fail') {
-        teamH = { id: 'H', name: '우루과이 🇺🇾', group: 'H', pts: 4, gd: 0, desc: '우루과이 선방' };
+        teamH = { id: 'H', name: '우루과이', code: 'uy', flag: '🇺🇾', group: 'H', pts: 4, gd: 0, desc: '우루과이 무승부 이상' };
       }
 
-      let teamI = { id: 'I', name: 'I조 3위 (이라크/세네갈)', group: 'I', pts: 3, gd: 0, desc: '대기 중' };
+      let teamI = { id: 'I', name: 'I조 3위 (이라크/세네갈)', code: '', flag: '❓', group: 'I', pts: 3, gd: 0, desc: '대기 중' };
       if (statusI === 'success') {
-        teamI = { id: 'I', name: '세네갈 🇸🇳', group: 'I', pts: 3, gd: -2, desc: '1골차 접전승' };
+        teamI = { id: 'I', name: '세네갈', code: 'sn', flag: '🇸🇳', group: 'I', pts: 3, gd: -2, desc: '1골차 접전승' };
       } else if (statusI === 'fail') {
-        teamI = { id: 'I', name: '이라크 🇮🇶', group: 'I', pts: 4, gd: 1, desc: '이라크 선방' };
+        teamI = { id: 'I', name: '이라크', code: 'iq', flag: '🇮🇶', group: 'I', pts: 4, gd: 1, desc: '이라크 선방' };
       }
 
-      let teamJ = { id: 'J', name: 'J조 3위 (오스트리아/알제리)', group: 'J', pts: 3, gd: 0, desc: '대기 중' };
+      let teamJ = { id: 'J', name: 'J조 3위 (오스트리아/알제리)', code: '', flag: '❓', group: 'J', pts: 3, gd: 0, desc: '대기 중' };
       if (statusJ === 'success') {
-        teamJ = { id: 'J', name: '알제리 🇩🇿', group: 'J', pts: 3, gd: -2, desc: '오스트리아 승' };
+        teamJ = { id: 'J', name: '알제리', code: 'dz', flag: '🇩🇿', group: 'J', pts: 3, gd: -2, desc: '오스트리아 승' };
       } else if (statusJ === 'fail') {
-        teamJ = { id: 'J', name: '오스트리아 🇦🇹', group: 'J', pts: 4, gd: 1, desc: '알제리 접전승' };
+        teamJ = { id: 'J', name: '오스트리아', code: 'at', flag: '🇦🇹', group: 'J', pts: 4, gd: 1, desc: '알제리 접전승' };
       }
 
-      let teamK = { id: 'K', name: 'K조 3위 (대기중)', group: 'K', pts: 3, gd: 0, desc: '대기 중' };
+      let teamK = { id: 'K', name: 'K조 3위 (대기중)', code: '', flag: '❓', group: 'K', pts: 3, gd: 0, desc: '대기 중' };
       if (statusK === 'success') {
-        teamK = { id: 'K', name: 'DR콩고 🇨🇩', group: 'K', pts: 2, gd: -1, desc: 'DR콩고 무승부 이하' };
+        teamK = { id: 'K', name: 'DR콩고', code: 'cd', flag: '🇨🇩', group: 'K', pts: 2, gd: -1, desc: 'DR콩고 무승부 이하' };
       } else if (statusK === 'fail') {
-        teamK = { id: 'K', name: 'DR콩고 🇨🇩', group: 'K', pts: 4, gd: 1, desc: 'DR콩고 승리' };
+        teamK = { id: 'K', name: 'DR콩고', code: 'cd', flag: '🇨🇩', group: 'K', pts: 4, gd: 1, desc: 'DR콩고 승리' };
       }
 
-      let teamL = { id: 'L', name: 'L조 3위 (대기중)', group: 'L', pts: 3, gd: 0, desc: '대기 중' };
+      let teamL = { id: 'L', name: 'L조 3위 (대기중)', code: '', flag: '❓', group: 'L', pts: 3, gd: 0, desc: '대기 중' };
       if (statusL === 'success') {
-        teamL = { id: 'L', name: '크로아티아 🇭🇷', group: 'L', pts: 3, gd: -2, desc: '크로아티아 대패' };
+        teamL = { id: 'L', name: '크로아티아', code: 'hr', flag: '🇭🇷', group: 'L', pts: 3, gd: -2, desc: '크로아티아 대패' };
       } else if (statusL === 'fail') {
-        teamL = { id: 'L', name: '크로아티아 🇭🇷', group: 'L', pts: 4, gd: 0, desc: '크로아티아 무승부 이상' };
+        teamL = { id: 'L', name: '크로아티아', code: 'hr', flag: '🇭🇷', group: 'L', pts: 4, gd: 0, desc: '크로아티아 무승부 이상' };
       }
 
       const allTeams = [...baseTeams, teamG, teamH, teamI, teamJ, teamK, teamL];
@@ -665,9 +676,14 @@
             </div>
 
             <div class="flex items-center gap-2 mb-2.5">
-              <div class="flex items-center -space-x-1 shrink-0">
-                <span class="text-3xl filter drop-shadow">${s.flagHome}</span>
-                <span class="text-3xl filter drop-shadow">${s.flagAway}</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <div class="flex items-center -space-x-1 shrink-0">
+                  <img src="https://flagcdn.com/w40/${s.codeHome}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" class="w-8 h-5 object-cover rounded shadow-sm inline-block" alt="${s.codeHome}">
+                  <span class="hidden text-2xl filter drop-shadow">${s.flagHome}</span>
+                  
+                  <img src="https://flagcdn.com/w40/${s.codeAway}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" class="w-8 h-5 object-cover rounded shadow-sm inline-block" alt="${s.codeAway}">
+                  <span class="hidden text-2xl filter drop-shadow">${s.flagAway}</span>
+                </div>
               </div>
               <h4 class="text-[11px] md:text-xs font-black truncate ${titleClass}">${s.title}</h4>
             </div>
@@ -696,9 +712,13 @@
           <div class="p-1.5 flex items-center justify-between transition-all ${
             isKorea ? 'bg-slate-800 border-y border-amber-500/50 shadow-md font-bold' : 'hover:bg-slate-900/20'
           }">
-            <div class="flex items-center gap-1.5">
-              <span class="w-4 text-center font-mono text-[10px] ${isKorea ? 'text-amber-400 font-bold' : 'text-slate-600'}">${rank}</span>
-              <span class="${isKorea ? 'text-amber-400 font-extrabold' : 'text-slate-300'}">${team.name}</span>
+            <div class="flex items-center gap-2">
+              <span class="w-4 text-center font-mono text-[10px] ${isKorea ? 'text-amber-400 font-bold' : 'text-slate-650'}">${rank}</span>
+              <div class="flex items-center gap-1.5">
+                ${team.code ? `<img src="https://flagcdn.com/w40/${team.code}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" class="w-5 h-3.5 object-cover rounded-sm shadow-sm inline-block" alt="${team.code}">` : ''}
+                <span class="hidden text-xs">${team.flag}</span>
+                <span class="${isKorea ? 'text-amber-400 font-extrabold' : 'text-slate-300'}">${team.name}</span>
+              </div>
               <span class="text-[8px] text-slate-500 px-0.5 bg-slate-950 border border-slate-850 rounded font-mono">${team.group}조</span>
             </div>
 
@@ -821,5 +841,3 @@
   </script>
 </body>
 </html>
-
-```
