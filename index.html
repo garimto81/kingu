@@ -1,623 +1,706 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Flame, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  RotateCcw, 
-  HelpCircle, 
-  TrendingUp, 
-  Award, 
-  Sparkles,
-  Calendar,
-  ThumbsUp,
-  ThumbsDown,
-  Info
-} from 'lucide-react';
-
-export default function App() {
-  // 6가지 경우의 수 시나리오 초기 상태
-  const initialScenarios = [
-    {
-      id: 1,
-      group: 'G',
-      title: '이집트 🇪🇬 vs 이란 🇮🇷',
-      condition: '이집트 승리',
-      detail: '이집트가 승리하면 이란은 승점 2점에 머물러 G조 3위는 한국보다 아래가 됩니다.',
-      status: 'pending', // 'pending' | 'success' | 'fail'
-    },
-    {
-      id: 2,
-      group: 'H',
-      title: '스페인 🇪🇸 vs 우루과이 🇺🇾',
-      condition: '스페인 승리',
-      detail: '스페인이 승리하면 우루과이는 승점 2점에 머물러 H조 3위는 한국보다 아래가 됩니다.',
-      status: 'pending',
-    },
-    {
-      id: 3,
-      group: 'I',
-      title: '세네갈 🇸🇳 vs 이라크 🇮🇶',
-      condition: '세네갈 1골차 이하 승리 또는 이라크 4골차 이하 승리',
-      detail: '두 팀이 비기거나 최소 격차로 이겨야 I조 3위 골득실이 -2 이하로 내려가 한국(-1)보다 아래가 됩니다.',
-      status: 'pending',
-    },
-    {
-      id: 4,
-      group: 'J',
-      title: '오스트리아 🇦🇹 vs 알제리 🇩🇿',
-      condition: '오스트리아 승리 또는 알제리 2골차 이상 승리',
-      detail: '알제리가 탈락하거나, 알제리가 대승하여 오스트리아 골득실을 -2 이하로 깎아내려야 한국이 앞섭니다.',
-      status: 'pending',
-    },
-    {
-      id: 5,
-      group: 'K',
-      title: 'DR콩고 🇨🇩 vs 우즈베키스탄 🇺🇿',
-      condition: 'DR콩고 무승부 또는 패배',
-      detail: 'DR콩고가 이기지 못하면 K조 3위는 최대 승점 2점에 그쳐 한국이 무조건 이깁니다.',
-      status: 'pending',
-    },
-    {
-      id: 6,
-      group: 'L',
-      title: '가나 🇬🇭 vs 크로아티아 🇭🇷',
-      condition: '가나 승리',
-      detail: '가나가 승리하면 크로아티아는 승점 3점, 골득실 최소 -2 이하가 되어 한국(-1)이 우위를 점합니다.',
-      status: 'pending',
-    },
-  ];
-
-  const [scenarios, setScenarios] = useState(initialScenarios);
-  const [showHelpModal, setShowHelpModal] = useState(false);
-
-  // 시나리오 개별 상태 변경 핸들러
-  const handleStatusChange = (id, newStatus) => {
-    setScenarios(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
-  };
-
-  // 프리셋 설정 핸들러
-  const applyPreset = (type) => {
-    if (type === 'best') {
-      setScenarios(prev => prev.map(s => ({ ...s, status: 'success' })));
-    } else if (type === 'worst') {
-      setScenarios(prev => prev.map(s => ({ ...s, status: 'fail' })));
-    } else if (type === 'cutoff') {
-      // 정확히 3개만 성공시키는 시나리오 (G, H, K 성공, 나머지 실패)
-      setScenarios(prev => prev.map(s => {
-        if ([1, 2, 5].includes(s.id)) return { ...s, status: 'success' };
-        return { ...s, status: 'fail' };
-      }));
-    } else {
-      setScenarios(initialScenarios);
-    }
-  };
-
-  // 실시간 12개조 3위 테이블 및 진출 결과 계산
-  const standings = useMemo(() => {
-    // 고정된 A~F조 3위 데이터
-    const baseTeams = [
-      { id: 'KOR', name: '대한민국 🇰🇷', group: 'A', pts: 3, gd: -1, fixed: true, desc: '한국 조별리그 최종 성적' },
-      { id: 'BIH', name: '보스니아 🇧🇦', group: 'B', pts: 4, gd: 0, fixed: true, desc: '진출 유력 (승점 4)' },
-      { id: 'SCO', name: '스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C', pts: 3, gd: -3, fixed: true, desc: '한국보다 아래 확정' },
-      { id: 'PRY', name: '파라과이 🇵🇾', group: 'D', pts: 4, gd: -1, fixed: true, desc: '진출 유력 (승점 4)' },
-      { id: 'ECU', name: '에콰도르 🇪🇨', group: 'E', pts: 4, gd: 0, fixed: true, desc: '진출 유력 (승점 4)' },
-      { id: 'SWE', name: '스웨덴 🇸🇪', group: 'F', pts: 4, gd: 1, fixed: true, desc: '진출 유력 (승점 4)' },
-    ];
-
-    const currentScenarios = {
-      G: scenarios.find(s => s.group === 'G').status,
-      H: scenarios.find(s => s.group === 'H').status,
-      I: scenarios.find(s => s.group === 'I').status,
-      J: scenarios.find(s => s.group === 'J').status,
-      K: scenarios.find(s => s.group === 'K').status,
-      L: scenarios.find(s => s.group === 'L').status,
-    };
-
-    // G조 가상 계산
-    let teamG = { id: 'G', name: 'G조 3위 (이란/벨기에)', group: 'G', pts: 3, gd: 0, fixed: false };
-    if (currentScenarios.G === 'success') {
-      teamG = { ...teamG, name: '이란 🇮🇷 (G조 3위)', pts: 2, gd: -2, desc: '이집트 승리로 승점 저하' };
-    } else if (currentScenarios.G === 'fail') {
-      teamG = { ...teamG, name: '벨기에 🇧🇪 (G조 3위)', pts: 4, gd: 0, desc: '이집트 승리 실패로 승점 상승' };
-    } else {
-      teamG = { ...teamG, name: 'G조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
-    }
-
-    // H조 가상 계산
-    let teamH = { id: 'H', name: 'H조 3위 (우루과이)', group: 'H', pts: 3, gd: 0, fixed: false };
-    if (currentScenarios.H === 'success') {
-      teamH = { ...teamH, name: '우루과이 🇺🇾 (H조 3위)', pts: 2, gd: -2, desc: '스페인 승리로 우루과이 차단' };
-    } else if (currentScenarios.H === 'fail') {
-      teamH = { ...teamH, name: '우루과이 🇺🇾 (H조 3위)', pts: 4, gd: 0, desc: '스페인 승리 실패로 무승부 이상' };
-    } else {
-      teamH = { ...teamH, name: 'H조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
-    }
-
-    // I조 가상 계산
-    let teamI = { id: 'I', name: 'I조 3위 (이라크/세네갈)', group: 'I', pts: 3, gd: 0, fixed: false };
-    if (currentScenarios.I === 'success') {
-      teamI = { ...teamI, name: '세네갈 🇸🇳 (I조 3위)', pts: 3, gd: -2, desc: '최소 격차 승부로 득실 하락' };
-    } else if (currentScenarios.I === 'fail') {
-      teamI = { ...teamI, name: '이라크 🇮🇶 (I조 3위)', pts: 4, gd: 1, desc: '어느 한쪽의 대승 및 무승부' };
-    } else {
-      teamI = { ...teamI, name: 'I조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
-    }
-
-    // J조 가상 계산
-    let teamJ = { id: 'J', name: 'J조 3위 (오스트리아/알제리)', group: 'J', pts: 3, gd: 0, fixed: false };
-    if (currentScenarios.J === 'success') {
-      teamJ = { ...teamJ, name: '알제리 🇩🇿 (J조 3위)', pts: 3, gd: -2, desc: '알제리 대패 혹은 오스트리아 승' };
-    } else if (currentScenarios.J === 'fail') {
-      teamJ = { ...teamJ, name: '오스트리아 🇦🇹 (J조 3위)', pts: 4, gd: 1, desc: '한국에 불리한 스코어 상황' };
-    } else {
-      teamJ = { ...teamJ, name: 'J조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
-    }
-
-    // K조 가상 계산
-    let teamK = { id: 'K', name: 'K조 3위 (DR콩고)', group: 'K', pts: 3, gd: 0, fixed: false };
-    if (currentScenarios.K === 'success') {
-      teamK = { ...teamK, name: 'DR콩고 🇨🇩 (K조 3위)', pts: 2, gd: -1, desc: 'DR콩고가 승리하지 못함' };
-    } else if (currentScenarios.K === 'fail') {
-      teamK = { ...teamK, name: 'DR콩고 🇨🇩 (K조 3위)', pts: 4, gd: 1, desc: 'DR콩고 승리로 한국 추월' };
-    } else {
-      teamK = { ...teamK, name: 'K조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
-    }
-
-    // L조 가상 계산
-    let teamL = { id: 'L', name: 'L조 3위 (크로아티아)', group: 'L', pts: 3, gd: 0, fixed: false };
-    if (currentScenarios.L === 'success') {
-      teamL = { ...teamL, name: '크로아티아 🇭🇷 (L조 3위)', pts: 3, gd: -2, desc: '가나 승리로 크로아티아 득실 하락' };
-    } else if (currentScenarios.L === 'fail') {
-      teamL = { ...teamL, name: '크로아티아 🇭🇷 (L조 3위)', pts: 4, gd: 0, desc: '크로아티아 선방으로 승점 추가' };
-    } else {
-      teamL = { ...teamL, name: 'L조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
-    }
-
-    const allTeams = [...baseTeams, teamG, teamH, teamI, teamJ, teamK, teamL];
-
-    // 정렬 규칙: 1. 승점 내림차순, 2. 골득실 내림차순
-    return allTeams.sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      return b.gd - a.gd;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 북중미 월드컵 대한민국 32강 경우의 수 계산기</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React 18 및 ReactDOM 18 CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel CDN (브라우저 내 실시간 JSX 컴파일) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    // Babel의 기본 자동 런타임 옵션과 충돌을 방지하기 위해 'classic' 런타임을 명시한 프리셋 등록
+    Babel.registerPreset('custom-react', {
+      presets: [
+        [Babel.availablePresets['react'], { runtime: 'classic' }]
+      ]
     });
-  }, [scenarios]);
-
-  // 통계값 계산
-  const totalMet = scenarios.filter(s => s.status === 'success').length;
-  const totalFailed = scenarios.filter(s => s.status === 'fail').length;
-  const totalPending = scenarios.filter(s => s.status === 'pending').length;
-
-  // 한국의 현재 랭킹 인덱스 찾기
-  const koreaRank = standings.findIndex(t => t.id === 'KOR') + 1;
-  const isKoreaQualified = koreaRank <= 8;
-
-  // 한국의 현 상태 판단
-  const koreaStatus = useMemo(() => {
-    if (totalMet >= 3) {
-      return {
-        label: '32강 진출 확정',
-        color: 'text-emerald-400 bg-emerald-950/50 border-emerald-500/30',
-        badge: 'bg-emerald-500 text-white',
-        icon: <CheckCircle className="w-8 h-8 text-emerald-400 animate-bounce" />,
-        desc: '축하합니다! 최소 3개 이상의 희망 조건이 성립하여 대한민국이 와일드카드로 32강 토너먼트에 극적으로 합류합니다!'
-      };
-    } else if (totalFailed > 3) {
-      return {
-        label: '조별리그 탈락 확정',
-        color: 'text-red-400 bg-red-950/50 border-red-500/30',
-        badge: 'bg-red-500 text-white',
-        icon: <XCircle className="w-8 h-8 text-red-400" />,
-        desc: '아쉽게도 탈락 조건이 4개 이상 누적되어 대한민국이 상위 8개 와일드카드 진입에 실패했습니다.'
-      };
-    } else {
-      return {
-        label: '진출 대기중 (경우의 수 연산)',
-        color: 'text-amber-400 bg-amber-950/50 border-amber-500/30',
-        badge: 'bg-amber-500 text-slate-950',
-        icon: <AlertCircle className="w-8 h-8 text-amber-400 animate-pulse" />,
-        desc: '남은 경기의 결과에 따라 생존 여부가 결정됩니다. 아래의 시나리오 카드들을 터치해 결과를 시뮬레이션해보세요.'
-      };
+  </script>
+  <style>
+    /* 스크롤바 커스텀 스타일 */
+    ::-webkit-scrollbar {
+      width: 6px;
     }
-  }, [totalMet, totalFailed]);
+    ::-webkit-scrollbar-track {
+      background: #020617;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="root"></div>
 
-  // 진행률 게이지 계산
-  const progressPercent = Math.min(100, Math.round((totalMet / 3) * 100));
+  <!-- React App Code using registered Babel compilation preset -->
+  <script type="text/babel" data-presets="custom-react">
+    const { useState, useMemo } = React;
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 antialiased">
-      {/* 글로벌 네비게이션 헤더 */}
-      <header className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-red-600 p-2.5 rounded-xl shadow-lg shadow-red-600/20">
-            <Flame className="w-6 h-6 text-white animate-pulse" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-              홍명보호 32강 경우의 수 <span className="text-red-500">계산기</span>
-            </h1>
-            <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-              <Calendar className="w-3 h-3" /> 2026. 06. 26. 14:28 KST (실시간 타 구장 반영 데이터)
-            </p>
-          </div>
-        </div>
+    // --- Lucide 아이콘들의 고품질 Inline SVG 대체 컴포넌트 정의 ---
+    const Flame = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+      </svg>
+    );
 
-        <div className="flex gap-2 flex-wrap justify-center">
-          <button 
-            onClick={() => setShowHelpModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-slate-400" /> 규칙 설명
-          </button>
-          <button 
-            onClick={() => applyPreset('reset')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-400" /> 전체 초기화
-          </button>
-        </div>
-      </header>
+    const CheckCircle = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    );
 
-      <main className="max-w-6xl mx-auto space-y-8">
-        
-        {/* 상단: 상태 및 정보 대시보드 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* 현 상황 서머리 및 결과 게이지 */}
-          <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between backdrop-blur-md relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 blur-3xl rounded-full"></div>
-            
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold tracking-wider text-red-500 uppercase">Current Status</span>
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${koreaStatus.badge}`}>
-                  {koreaStatus.label}
-                </span>
+    const XCircle = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+    );
+
+    const AlertCircle = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    );
+
+    const RotateCcw = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <polyline points="3 3 3 8 8 8"/>
+      </svg>
+    );
+
+    const HelpCircle = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    );
+
+    const TrendingUp = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+    );
+
+    const Award = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="7"/>
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+      </svg>
+    );
+
+    const Sparkles = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+      </svg>
+    );
+
+    const Calendar = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    );
+
+    const ThumbsUp = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+      </svg>
+    );
+
+    const ThumbsDown = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm12-3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>
+      </svg>
+    );
+
+    const Info = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+    );
+
+
+    function App() {
+      const initialScenarios = [
+        {
+          id: 1,
+          group: 'G',
+          title: '이집트 🇪🇬 vs 이란 🇮🇷',
+          condition: '이집트 승리',
+          detail: '이집트가 승리하면 이란은 승점 2점에 머물러 G조 3위는 한국보다 아래가 됩니다.',
+          status: 'pending',
+        },
+        {
+          id: 2,
+          group: 'H',
+          title: '스페인 🇪🇸 vs 우루과이 🇺🇾',
+          condition: '스페인 승리',
+          detail: '스페인이 승리하면 우루과이는 승점 2점에 머물러 H조 3위는 한국보다 아래가 됩니다.',
+          status: 'pending',
+        },
+        {
+          id: 3,
+          group: 'I',
+          title: '세네갈 🇸🇳 vs 이라크 🇮🇶',
+          condition: '세네갈 1골차 이하 승리 또는 이라크 4골차 이하 승리',
+          detail: '두 팀이 비기거나 최소 격차로 이겨야 I조 3위 골득실이 -2 이하로 내려가 한국(-1)보다 아래가 됩니다.',
+          status: 'pending',
+        },
+        {
+          id: 4,
+          group: 'J',
+          title: '오스트리아 🇦🇹 vs 알제리 🇩🇿',
+          condition: '오스트리아 승리 또는 알제리 2골차 이상 승리',
+          detail: '알제리가 탈락하거나, 알제리가 대승하여 오스트리아 골득실을 -2 이하로 깎아내려야 한국이 앞섭니다.',
+          status: 'pending',
+        },
+        {
+          id: 5,
+          group: 'K',
+          title: 'DR콩고 🇨🇩 vs 우즈베키스탄 🇺🇿',
+          condition: 'DR콩고 무승부 또는 패배',
+          detail: 'DR콩고가 이기지 못하면 K조 3위는 최대 승점 2점에 그쳐 한국이 무조건 이깁니다.',
+          status: 'pending',
+        },
+        {
+          id: 6,
+          group: 'L',
+          title: '가나 🇬🇭 vs 크로아티아 🇭🇷',
+          condition: '가나 승리',
+          detail: '가나가 승리하면 크로아티아는 승점 3점, 골득실 최소 -2 이하가 되어 한국(-1)이 우위를 점합니다.',
+          status: 'pending',
+        },
+      ];
+
+      const [scenarios, setScenarios] = useState(initialScenarios);
+      const [showHelpModal, setShowHelpModal] = useState(false);
+
+      const handleStatusChange = (id, newStatus) => {
+        setScenarios(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+      };
+
+      const applyPreset = (type) => {
+        if (type === 'best') {
+          setScenarios(prev => prev.map(s => ({ ...s, status: 'success' })));
+        } else if (type === 'worst') {
+          setScenarios(prev => prev.map(s => ({ ...s, status: 'fail' })));
+        } else if (type === 'cutoff') {
+          setScenarios(prev => prev.map(s => {
+            if ([1, 2, 5].includes(s.id)) return { ...s, status: 'success' };
+            return { ...s, status: 'fail' };
+          }));
+        } else {
+          setScenarios(initialScenarios);
+        }
+      };
+
+      const standings = useMemo(() => {
+        const baseTeams = [
+          { id: 'KOR', name: '대한민국 🇰🇷', group: 'A', pts: 3, gd: -1, fixed: true, desc: '한국 조별리그 최종 성적' },
+          { id: 'BIH', name: '보스니아 🇧🇦', group: 'B', pts: 4, gd: 0, fixed: true, desc: '진출 유력 (승점 4)' },
+          { id: 'SCO', name: '스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C', pts: 3, gd: -3, fixed: true, desc: '한국보다 아래 확정' },
+          { id: 'PRY', name: '파라과이 🇵🇾', group: 'D', pts: 4, gd: -1, fixed: true, desc: '진출 유력 (승점 4)' },
+          { id: 'ECU', name: '에콰도르 🇪🇨', group: 'E', pts: 4, gd: 0, fixed: true, desc: '진출 유력 (승점 4)' },
+          { id: 'SWE', name: '스웨덴 🇸🇪', group: 'F', pts: 4, gd: 1, fixed: true, desc: '진출 유력 (승점 4)' },
+        ];
+
+        const currentScenarios = {
+          G: scenarios.find(s => s.group === 'G').status,
+          H: scenarios.find(s => s.group === 'H').status,
+          I: scenarios.find(s => s.group === 'I').status,
+          J: scenarios.find(s => s.group === 'J').status,
+          K: scenarios.find(s => s.group === 'K').status,
+          L: scenarios.find(s => s.group === 'L').status,
+        };
+
+        let teamG = { id: 'G', name: 'G조 3위 (이란/벨기에)', group: 'G', pts: 3, gd: 0, fixed: false };
+        if (currentScenarios.G === 'success') {
+          teamG = { ...teamG, name: '이란 🇮🇷 (G조 3위)', pts: 2, gd: -2, desc: '이집트 승리로 승점 저하' };
+        } else if (currentScenarios.G === 'fail') {
+          teamG = { ...teamG, name: '벨기에 🇧🇪 (G조 3위)', pts: 4, gd: 0, desc: '이집트 승리 실패로 승점 상승' };
+        } else {
+          teamG = { ...teamG, name: 'G조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
+        }
+
+        let teamH = { id: 'H', name: 'H조 3위 (우루과이)', group: 'H', pts: 3, gd: 0, fixed: false };
+        if (currentScenarios.H === 'success') {
+          teamH = { ...teamH, name: '우루과이 🇺🇾 (H조 3위)', pts: 2, gd: -2, desc: '스페인 승리로 우루과이 차단' };
+        } else if (currentScenarios.H === 'fail') {
+          teamH = { ...teamH, name: '우루과이 🇺🇾 (H조 3위)', pts: 4, gd: 0, desc: '스페인 승리 실패로 무승부 이상' };
+        } else {
+          teamH = { ...teamH, name: 'H조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
+        }
+
+        let teamI = { id: 'I', name: 'I조 3위 (이라크/세네갈)', group: 'I', pts: 3, gd: 0, fixed: false };
+        if (currentScenarios.I === 'success') {
+          teamI = { ...teamI, name: '세네갈 🇸🇳 (I조 3위)', pts: 3, gd: -2, desc: '최소 격차 승부로 득실 하락' };
+        } else if (currentScenarios.I === 'fail') {
+          teamI = { ...teamI, name: '이라크 🇮🇶 (I조 3위)', pts: 4, gd: 1, desc: '어느 한쪽의 대승 및 무승부' };
+        } else {
+          teamI = { ...teamI, name: 'I조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
+        }
+
+        let teamJ = { id: 'J', name: 'J조 3위 (오스트리아/알제리)', group: 'J', pts: 3, gd: 0, fixed: false };
+        if (currentScenarios.J === 'success') {
+          teamJ = { ...teamJ, name: '알제리 🇩🇿 (J조 3위)', pts: 3, gd: -2, desc: '알제리 대패 혹은 오스트리아 승' };
+        } else if (currentScenarios.J === 'fail') {
+          teamJ = { ...teamJ, name: '오스트리아 🇦🇹 (J조 3위)', pts: 4, gd: 1, desc: '한국에 불리한 스코어 상황' };
+        } else {
+          teamJ = { ...teamJ, name: 'J조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
+        }
+
+        let teamK = { id: 'K', name: 'K조 3위 (DR콩고)', group: 'K', pts: 3, gd: 0, fixed: false };
+        if (currentScenarios.K === 'success') {
+          teamK = { ...teamK, name: 'DR콩고 🇨🇩 (K조 3위)', pts: 2, gd: -1, desc: 'DR콩고가 승리하지 못함' };
+        } else if (currentScenarios.K === 'fail') {
+          teamK = { ...teamK, name: 'DR콩고 🇨🇩 (K조 3위)', pts: 4, gd: 1, desc: 'DR콩고 승리로 한국 추월' };
+        } else {
+          teamK = { ...teamK, name: 'K조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
+        }
+
+        let teamL = { id: 'L', name: 'L조 3위 (크로아티아)', group: 'L', pts: 3, gd: 0, fixed: false };
+        if (currentScenarios.L === 'success') {
+          teamL = { ...teamL, name: '크로아티아 🇭🇷 (L조 3위)', pts: 3, gd: -2, desc: '가나 승리로 크로아티아 득실 하락' };
+        } else if (currentScenarios.L === 'fail') {
+          teamL = { ...teamL, name: '크로아티아 🇭🇷 (L조 3위)', pts: 4, gd: 0, desc: '크로아티아 선방으로 승점 추가' };
+        } else {
+          teamL = { ...teamL, name: 'L조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태 (가상치)' };
+        }
+
+        const allTeams = [...baseTeams, teamG, teamH, teamI, teamJ, teamK, teamL];
+
+        return allTeams.sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          return b.gd - a.gd;
+        });
+      }, [scenarios]);
+
+      const totalMet = scenarios.filter(s => s.status === 'success').length;
+      const totalFailed = scenarios.filter(s => s.status === 'fail').length;
+      const totalPending = scenarios.filter(s => s.status === 'pending').length;
+
+      const koreaRank = standings.findIndex(t => t.id === 'KOR') + 1;
+      const isKoreaQualified = koreaRank <= 8;
+
+      const koreaStatus = useMemo(() => {
+        if (totalMet >= 3) {
+          return {
+            label: '32강 진출 확정',
+            badge: 'bg-emerald-500 text-white',
+            icon: <CheckCircle className="w-8 h-8 text-emerald-400 animate-bounce" />,
+            desc: '축하합니다! 최소 3개 이상의 희망 조건이 성립하여 대한민국이 와일드카드로 32강 토너먼트에 극적으로 합류합니다!'
+          };
+        } else if (totalFailed > 3) {
+          return {
+            label: '조별리그 탈락 확정',
+            badge: 'bg-red-500 text-white',
+            icon: <XCircle className="w-8 h-8 text-red-400" />,
+            desc: '아쉽게도 탈락 조건이 4개 이상 누적되어 대한민국이 상위 8개 와일드카드 진입에 실패했습니다.'
+          };
+        } else {
+          return {
+            label: '진출 대기중 (경우의 수 연산)',
+            badge: 'bg-amber-500 text-slate-950',
+            icon: <AlertCircle className="w-8 h-8 text-amber-400 animate-pulse" />,
+            desc: '남은 경기의 결과에 따라 생존 여부가 결정됩니다. 아래의 시나리오 카드들을 터치해 결과를 시뮬레이션해보세요.'
+          };
+        }
+      }, [totalMet, totalFailed]);
+
+      const progressPercent = Math.min(100, Math.round((totalMet / 3) * 100));
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 antialiased">
+          <header className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-red-600 p-2.5 rounded-xl shadow-lg shadow-red-600/20">
+                <Flame className="w-6 h-6 text-white animate-pulse" />
+              </div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                  홍명보호 32강 경우의 수 <span className="text-red-500">계산기</span>
+                </h1>
+                <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <Calendar className="w-3 h-3" /> 2026. 06. 26. 14:28 KST (실시간 타 구장 반영 데이터)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 flex-wrap justify-center">
+              <button 
+                onClick={() => setShowHelpModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-slate-400" /> 규칙 설명
+              </button>
+              <button 
+                onClick={() => applyPreset('reset')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-slate-400" /> 전체 초기화
+              </button>
+            </div>
+          </header>
+
+          <main className="max-w-6xl mx-auto space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between backdrop-blur-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 blur-3xl rounded-full"></div>
+                
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold tracking-wider text-red-500 uppercase">Current Status</span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${koreaStatus.badge}`}>
+                      {koreaStatus.label}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-4 mb-5">
+                    {koreaStatus.icon}
+                    <div>
+                      <h2 className="text-xl font-bold text-white mb-1">
+                        대한민국은 현재 <span className="text-yellow-400 underline decoration-yellow-400/40 underline-offset-4">{koreaRank}위</span>입니다.
+                      </h2>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        {koreaStatus.desc}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-slate-800/60">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-300 font-medium flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-400" /> 진출 조건 충족 게이지
+                    </span>
+                    <span className="font-mono font-bold text-white">
+                      {totalMet} / 3 <span className="text-xs text-slate-500 font-normal">(남은 시나리오 중 최소 3개 성립 필요)</span>
+                    </span>
+                  </div>
+                  
+                  <div className="w-full bg-slate-950 rounded-full h-3 p-0.5 border border-slate-800">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${
+                        totalMet >= 3 ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-gradient-to-r from-amber-500 to-red-500'
+                      }`}
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2 items-center">
+                    <span className="text-xs text-slate-500">빠른 필터:</span>
+                    <button 
+                      onClick={() => applyPreset('best')}
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/40 text-emerald-400 rounded-md transition"
+                    >
+                      최상의 시나리오 (6개 성립)
+                    </button>
+                    <button 
+                      onClick={() => applyPreset('cutoff')}
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md transition"
+                    >
+                      턱걸이 진출 (3개 성립)
+                    </button>
+                    <button 
+                      onClick={() => applyPreset('worst')}
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-red-950/40 hover:bg-red-900/40 border border-red-800/40 text-red-400 rounded-md transition"
+                    >
+                      절망적 시나리오 (전부 미성립)
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-start gap-4 mb-5">
-                {koreaStatus.icon}
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between backdrop-blur-md">
                 <div>
-                  <h2 className="text-xl font-bold text-white mb-1">
-                    대한민국은 현재 <span className="text-yellow-400 underline decoration-yellow-400/40 underline-offset-4">{koreaRank}위</span>입니다.
-                  </h2>
-                  <p className="text-slate-400 text-sm leading-relaxed">
-                    {koreaStatus.desc}
+                  <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">Korea's Fixed Record</span>
+                  <h2 className="text-lg font-bold text-white mt-2 mb-4">조별리그 A조 대한민국 최종 성적</h2>
+                  
+                  <div className="grid grid-cols-3 gap-2.5 mb-4">
+                    <div className="bg-slate-950 rounded-xl p-3 text-center border border-slate-850">
+                      <span className="text-[10px] text-slate-500 block uppercase font-semibold">경기수</span>
+                      <span className="text-lg font-black text-white font-mono">3</span>
+                    </div>
+                    <div className="bg-slate-950 rounded-xl p-3 text-center border border-slate-850">
+                      <span className="text-[10px] text-slate-500 block uppercase font-semibold">골득실</span>
+                      <span className="text-lg font-black text-red-500 font-mono">-1</span>
+                    </div>
+                    <div className="bg-slate-950 rounded-xl p-3 text-center border border-slate-850">
+                      <span className="text-[10px] text-slate-500 block uppercase font-semibold">최종승점</span>
+                      <span className="text-lg font-black text-amber-400 font-mono">3</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-850/60 text-xs text-slate-400 space-y-1.5">
+                  <p className="flex justify-between">
+                    <span>자력 진출 조건:</span>
+                    <span className="text-red-400 font-semibold">남아공전 패배로 상실 ❌</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>3위 와일드카드 최소 요건:</span>
+                    <span>타 조 3위 4개국 이상 누르기</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>이미 누른 조 3위:</span>
+                    <span className="text-emerald-400 font-semibold">스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿 (확정)</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* 게이지 바 및 조건 충족 수 */}
-            <div className="space-y-3 pt-4 border-t border-slate-800/60">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300 font-medium flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-400" /> 진출 조건 충족 게이지
-                </span>
-                <span className="font-mono font-bold text-white">
-                  {totalMet} / 3 <span className="text-xs text-slate-500 font-normal">(남은 시나리오 중 최소 3개 성립 필요)</span>
-                </span>
-              </div>
-              
-              <div className="w-full bg-slate-950 rounded-full h-3 p-0.5 border border-slate-800">
-                <div 
-                  className={`h-full rounded-full transition-all duration-500 ease-out ${
-                    totalMet >= 3 ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-gradient-to-r from-amber-500 to-red-500'
-                  }`}
-                  style={{ width: `${progressPercent}%` }}
-                ></div>
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
+                <h3 className="text-base font-bold text-slate-300 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-red-500" />
+                  미래 시나리오 실시간 조정 (남은 6개 조건)
+                </h3>
 
-              {/* 간편 시나리오 시뮬레이션 프리셋 단추 */}
-              <div className="flex flex-wrap gap-2 pt-2 items-center">
-                <span className="text-xs text-slate-500">빠른 필터:</span>
-                <button 
-                  onClick={() => applyPreset('best')}
-                  className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/40 text-emerald-400 rounded-md transition"
-                >
-                  최상의 시나리오 (6개 모두 성립)
-                </button>
-                <button 
-                  onClick={() => applyPreset('cutoff')}
-                  className="px-2.5 py-1 text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md transition"
-                >
-                  턱걸이 진출 시뮬레이션 (3개만 성립)
-                </button>
-                <button 
-                  onClick={() => applyPreset('worst')}
-                  className="px-2.5 py-1 text-[11px] font-semibold bg-red-950/40 hover:bg-red-900/40 border border-red-800/40 text-red-400 rounded-md transition"
-                >
-                  절망적 시나리오 (전부 미성립)
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 한국의 현 성적 요약 카드 */}
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between backdrop-blur-md">
-            <div>
-              <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">Korea's Fixed Record</span>
-              <h2 className="text-lg font-bold text-white mt-2 mb-4">조별리그 A조 대한민국 최종 성적</h2>
-              
-              <div className="grid grid-cols-3 gap-2.5 mb-4">
-                <div className="bg-slate-950 rounded-xl p-3 text-center border border-slate-850">
-                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">경기수</span>
-                  <span className="text-lg font-black text-white font-mono">3</span>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3 text-center border border-slate-850">
-                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">골득실</span>
-                  <span className="text-lg font-black text-red-500 font-mono">-1</span>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3 text-center border border-slate-850">
-                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">최종승점</span>
-                  <span className="text-lg font-black text-amber-400 font-mono">3</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-850/60 text-xs text-slate-400 space-y-1.5">
-              <p className="flex justify-between">
-                <span>자력 진출 조건:</span>
-                <span className="text-red-400 font-semibold">남아공전 패배로 상실 ❌</span>
-              </p>
-              <p className="flex justify-between">
-                <span>3위 와일드카드 최소 요건:</span>
-                <span>타 조 3위 4개국 이상 누르기</span>
-              </p>
-              <p className="flex justify-between">
-                <span>이미 누른 조 3위:</span>
-                <span className="text-emerald-400 font-semibold">스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿 (확정)</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 메인 콘텐츠: 경우의 수 카드 리스트 & 실시간 순위표 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* 좌측 2개 열: 남은 경우의 수 컨트롤러 */}
-          <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-base font-bold text-slate-300 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-red-500" />
-              미래 시나리오 실시간 조정 (남은 6개 조건)
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {scenarios.map((scenario) => (
-                <div 
-                  key={scenario.id} 
-                  className={`bg-slate-900/40 border rounded-xl p-4.5 flex flex-col justify-between transition-all duration-200 hover:scale-[1.01] ${
-                    scenario.status === 'success' ? 'border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.04)] bg-emerald-950/5' : 
-                    scenario.status === 'fail' ? 'border-red-500/30 bg-red-950/5' : 'border-slate-800'
-                  }`}
-                >
-                  <div>
-                    {/* 상단 라벨 및 그룹 정보 */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black px-2 py-0.5 bg-slate-800 rounded-full text-slate-300 uppercase tracking-wider font-mono">
-                        Group {scenario.group}
-                      </span>
-                      {scenario.status === 'success' && (
-                        <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          <CheckCircle className="w-3 h-3" /> 성립 (한국 유리)
-                        </span>
-                      )}
-                      {scenario.status === 'fail' && (
-                        <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950 px-2 py-0.5 rounded-full border border-red-500/20">
-                          <XCircle className="w-3 h-3" /> 미성립 (한국 불리)
-                        </span>
-                      )}
-                      {scenario.status === 'pending' && (
-                        <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded-full border border-slate-850">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span> 경기전/대기
-                        </span>
-                      )}
-                    </div>
-
-                    {/* 대진 및 조건 제목 */}
-                    <h4 className="text-sm font-bold text-white mb-1.5">{scenario.title}</h4>
-                    
-                    {/* 타겟 희망 조건 */}
-                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-950 border border-slate-850 text-xs text-amber-400 mb-3 font-medium">
-                      희망 결과: {scenario.condition}
-                    </div>
-
-                    {/* 시나리오 조건 설명 */}
-                    <p className="text-slate-400 text-xs leading-relaxed mb-4 min-h-[40px]">
-                      {scenario.detail}
-                    </p>
-                  </div>
-
-                  {/* 세 세그먼트 스위치 제어 버튼 */}
-                  <div className="grid grid-cols-3 gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-850/80">
-                    <button
-                      onClick={() => handleStatusChange(scenario.id, 'success')}
-                      className={`py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                        scenario.status === 'success' 
-                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/10' 
-                        : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      <ThumbsUp className="w-3 h-3" /> 성립
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(scenario.id, 'pending')}
-                      className={`py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center transition-all ${
-                        scenario.status === 'pending' 
-                        ? 'bg-slate-800 text-slate-100' 
-                        : 'text-slate-500 hover:text-slate-400'
-                      }`}
-                    >
-                      대기
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(scenario.id, 'fail')}
-                      className={`py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                        scenario.status === 'fail' 
-                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/10' 
-                        : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      <ThumbsDown className="w-3 h-3" /> 미성립
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* 유의 및 참고 사항 아코디언 */}
-            <div className="bg-slate-900/20 border border-slate-850 rounded-xl p-4 flex gap-3 text-xs text-slate-400">
-              <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-slate-300 mb-1">실시간 자동 순위 연산 안내</p>
-                <p className="leading-relaxed">
-                  위 버튼에서 <strong>성립</strong>을 누르면 상대 국가가 부진하여 대한민국 아래로 하강하고, <strong>미성립</strong>을 선택하면 상대국이 선전하여 한국보다 높은 승점/득실을 따내 한국을 추월하는 가상의 데이터가 우측 랭킹에 즉시 계산되어 반영됩니다.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 우측 1개 열: 12개 조 3위 실시간 테이블 */}
-          <div className="space-y-4">
-            <h3 className="text-base font-bold text-slate-300 flex items-center gap-2">
-              <Award className="w-4 h-4 text-yellow-500" />
-              12개 조 3위 실시간 와일드카드 테이블
-            </h3>
-
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl">
-              
-              {/* 테이블 헤더 범례 */}
-              <div className="p-3 bg-slate-950 border-b border-slate-850 text-[10px] text-slate-400 flex items-center justify-between font-bold">
-                <span>RANK & NATION</span>
-                <div className="flex gap-4">
-                  <span className="w-8 text-center">승점</span>
-                  <span className="w-8 text-center">득실</span>
-                  <span className="w-6 text-center">결과</span>
-                </div>
-              </div>
-
-              {/* 12개팀 렌더링 루프 */}
-              <div className="divide-y divide-slate-850">
-                {standings.map((team, index) => {
-                  const rank = index + 1;
-                  const isKorea = team.id === 'KOR';
-                  const isPassZone = rank <= 8;
-
-                  return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {scenarios.map((scenario) => (
                     <div 
-                      key={team.id} 
-                      className={`p-3 flex items-center justify-between transition-all duration-300 ${
-                        isKorea 
-                          ? 'bg-slate-800/80 border-y-2 border-amber-500/60 shadow-lg relative z-10' 
-                          : isPassZone 
-                            ? 'hover:bg-slate-900/40' 
-                            : 'bg-red-950/5 hover:bg-red-950/10'
+                      key={scenario.id} 
+                      className={`bg-slate-900/40 border rounded-xl p-4.5 flex flex-col justify-between transition-all duration-200 hover:scale-[1.01] ${
+                        scenario.status === 'success' ? 'border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.04)] bg-emerald-950/5' : 
+                        scenario.status === 'fail' ? 'border-red-500/30 bg-red-950/5' : 'border-slate-800'
                       }`}
                     >
-                      {/* 순위와 팀명 */}
-                      <div className="flex items-center gap-2.5">
-                        <span className={`w-5 text-center font-mono text-xs font-bold ${
-                          isKorea ? 'text-amber-400' : isPassZone ? 'text-slate-400' : 'text-slate-600'
-                        }`}>
-                          {rank}
-                        </span>
-                        
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-xs font-bold ${isKorea ? 'text-amber-400 font-extrabold' : 'text-slate-200'}`}>
-                              {team.name}
-                            </span>
-                            <span className="text-[9px] font-black font-mono text-slate-500 px-1 py-0.2 bg-slate-950 border border-slate-850 rounded">
-                              {team.group}조
-                            </span>
-                          </div>
-                          <span className="text-[9px] text-slate-500 font-medium block">
-                            {team.desc}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-black px-2 py-0.5 bg-slate-800 rounded-full text-slate-300 uppercase tracking-wider font-mono">
+                            Group {scenario.group}
                           </span>
-                        </div>
-                      </div>
-
-                      {/* 성적 데이터 */}
-                      <div className="flex gap-4 text-xs font-semibold items-center font-mono">
-                        <span className={`w-8 text-center ${isKorea ? 'text-amber-400 font-black' : 'text-slate-300'}`}>
-                          {team.pts}
-                        </span>
-                        <span className={`w-8 text-center ${
-                          team.gd > 0 ? 'text-emerald-400' : team.gd < 0 ? 'text-red-400' : 'text-slate-400'
-                        }`}>
-                          {team.gd > 0 ? `+${team.gd}` : team.gd}
-                        </span>
-                        
-                        {/* 합격/탈락 태그 */}
-                        <span className="w-6 flex justify-center">
-                          {isPassZone ? (
-                            <span className="w-4 h-4 rounded-full bg-emerald-950 border border-emerald-500/30 text-[9px] font-black text-emerald-400 flex items-center justify-center">
-                              P
-                            </span>
-                          ) : (
-                            <span className="w-4 h-4 rounded-full bg-red-950 border border-red-500/30 text-[9px] font-black text-red-400 flex items-center justify-center">
-                              F
+                          {scenario.status === 'success' && (
+                            <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                              <CheckCircle className="w-3 h-3" /> 성립 (한국 유리)
                             </span>
                           )}
-                        </span>
+                          {scenario.status === 'fail' && (
+                            <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950 px-2 py-0.5 rounded-full border border-red-500/20">
+                              <XCircle className="w-3 h-3" /> 미성립 (한국 불리)
+                            </span>
+                          )}
+                          {scenario.status === 'pending' && (
+                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded-full border border-slate-850">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span> 경기전/대기
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 className="text-sm font-bold text-white mb-1.5">{scenario.title}</h4>
+                        
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-950 border border-slate-850 text-xs text-amber-400 mb-3 font-medium">
+                          희망 결과: {scenario.condition}
+                        </div>
+
+                        <p className="text-slate-400 text-xs leading-relaxed mb-4 min-h-[40px]">
+                          {scenario.detail}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-850/80">
+                        <button
+                          onClick={() => handleStatusChange(scenario.id, 'success')}
+                          className={`py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
+                            scenario.status === 'success' 
+                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/10' 
+                            : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <ThumbsUp className="w-3 h-3" /> 성립
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(scenario.id, 'pending')}
+                          className={`py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center transition-all ${
+                            scenario.status === 'pending' 
+                            ? 'bg-slate-800 text-slate-100' 
+                            : 'text-slate-500 hover:text-slate-400'
+                          }`}
+                        >
+                          대기
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(scenario.id, 'fail')}
+                          className={`py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
+                            scenario.status === 'fail' 
+                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/10' 
+                            : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <ThumbsDown className="w-3 h-3" /> 미성립
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+
+                <div className="bg-slate-900/20 border border-slate-850 rounded-xl p-4 flex gap-3 text-xs text-slate-400">
+                  <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-slate-300 mb-1">실시간 자동 순위 연산 안내</p>
+                    <p className="leading-relaxed">
+                      위 버튼에서 <strong>성립</strong>을 누르면 상대 국가가 부진하여 대한민국 아래로 하강하고, <strong>미성립</strong>을 선택하면 상대국이 선전하여 한국보다 높은 승점/득실을 따내 한국을 추월하는 가상의 데이터가 우측 랭킹에 즉시 계산되어 반영됩니다.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* 하단 컷오프 가이드 정보 */}
-              <div className="p-3 bg-slate-950 border-t border-slate-850 flex items-center justify-between text-[11px] text-slate-400">
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/30"></span> 1~8위 와일드카드 진출
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded bg-red-500/10 border border-red-500/30"></span> 9~12위 진출 탈락
-                </span>
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-300 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-yellow-500" />
+                  12개 조 3위 실시간 와일드카드 테이블
+                </h3>
+
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl">
+                  <div className="p-3 bg-slate-950 border-b border-slate-850 text-[10px] text-slate-400 flex items-center justify-between font-bold">
+                    <span>RANK & NATION</span>
+                    <div className="flex gap-4">
+                      <span className="w-8 text-center">승점</span>
+                      <span className="w-8 text-center">득실</span>
+                      <span className="w-6 text-center">결과</span>
+                    </div>
+                  </div>
+
+                  <div className="divide-y divide-slate-850">
+                    {standings.map((team, index) => {
+                      const rank = index + 1;
+                      const isKorea = team.id === 'KOR';
+                      const isPassZone = rank <= 8;
+
+                      return (
+                        <div 
+                          key={team.id} 
+                          className={`p-3 flex items-center justify-between transition-all duration-300 ${
+                            isKorea 
+                              ? 'bg-slate-800/80 border-y-2 border-amber-500/60 shadow-lg relative z-10' 
+                              : isPassZone 
+                                ? 'hover:bg-slate-900/40' 
+                                : 'bg-red-950/5 hover:bg-red-950/10'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className={`w-5 text-center font-mono text-xs font-bold ${
+                              isKorea ? 'text-amber-400' : isPassZone ? 'text-slate-400' : 'text-slate-600'
+                            }`}>
+                              {rank}
+                            </span>
+                            
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-xs font-bold ${isKorea ? 'text-amber-400 font-extrabold' : 'text-slate-200'}`}>
+                                  {team.name}
+                                </span>
+                                <span className="text-[9px] font-black font-mono text-slate-500 px-1 py-0.2 bg-slate-950 border border-slate-850 rounded">
+                                  {team.group}조
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-slate-500 font-medium block">
+                                {team.desc}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-4 text-xs font-semibold items-center font-mono">
+                            <span className={`w-8 text-center ${isKorea ? 'text-amber-400 font-black' : 'text-slate-300'}`}>
+                              {team.pts}
+                            </span>
+                            <span className={`w-8 text-center ${
+                              team.gd > 0 ? 'text-emerald-400' : team.gd < 0 ? 'text-red-400' : 'text-slate-400'
+                            }`}>
+                              {team.gd > 0 ? `+${team.gd}` : team.gd}
+                            </span>
+                            
+                            <span className="w-6 flex justify-center">
+                              {isPassZone ? (
+                                <span className="w-4 h-4 rounded-full bg-emerald-950 border border-emerald-500/30 text-[9px] font-black text-emerald-400 flex items-center justify-center">
+                                  P
+                                </span>
+                              ) : (
+                                <span className="w-4 h-4 rounded-full bg-red-950 border border-red-500/30 text-[9px] font-black text-red-400 flex items-center justify-center">
+                                  F
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border-t border-slate-850 flex items-center justify-between text-[11px] text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/30"></span> 1~8위 와일드카드 진출
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded bg-red-500/10 border border-red-500/30"></span> 9~12위 진출 탈락
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </main>
+          </main>
 
-      {/* 도움말 및 규칙 안내 팝업 모달 */}
-      {showHelpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-amber-500" />
-              경우의 수 및 와일드카드 규정 안내
-            </h4>
-            
-            <div className="space-y-3.5 text-xs text-slate-300 leading-relaxed">
-              <p>
-                이번 2026 월드컵은 참가국이 48개국으로 대폭 확대되면서, 기존과 완전히 다른 새로운 조별리그 룰이 적용됩니다.
-              </p>
-              
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-850 space-y-1.5 font-medium text-slate-400">
-                <p className="text-amber-500 font-bold mb-1">핵심 요약 규칙</p>
-                <p>1. 각 조 1위 및 2위(총 24개팀)는 무조건 진출</p>
-                <p>2. 조 3위 12개 국가 중 성적 상위 8개 팀만 32강 합류</p>
-                <p>3. 조 3위 성적 비교: 승점 → 골득실 → 다득점 순</p>
+          {showHelpModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+                <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-amber-500" />
+                  경우의 수 및 와일드카드 규정 안내
+                </h4>
+                
+                <div className="space-y-3.5 text-xs text-slate-300 leading-relaxed">
+                  <p>
+                    이번 2026 월드컵은 참가국이 48개국으로 대폭 확대되면서, 기존과 완전히 다른 새로운 조별리그 룰이 적용됩니다.
+                  </p>
+                  
+                  <div className="bg-slate-950 p-3 rounded-lg border border-slate-850 space-y-1.5 font-medium text-slate-400">
+                    <p className="text-amber-500 font-bold mb-1">핵심 요약 규칙</p>
+                    <p>1. 각 조 1위 및 2위(총 24개팀)는 무조건 진출</p>
+                    <p>2. 조 3위 12개 국가 중 성적 상위 8개 팀만 32강 합류</p>
+                    <p>3. 조 3위 성적 비교: 승점 → 골득실 → 다득점 순</p>
+                  </div>
+
+                  <p>
+                    대한민국은 최종 성적 <strong>승점 3점, 골득실 -1</strong>로 조 3위가 이미 확정되었습니다. 앞서 타 조의 경기 결과들로 인해 다른 조 3위인 보스니아, 에콰도르, 스웨덴, 파라과이는 전부 한국을 넘어섰습니다.
+                  </p>
+                  <p>
+                    따라서 한국이 살아남기 위해선 아직 경기가 다 끝나지 않은 <strong>G, H, I, J, K, L조 중 최소 3개조 이상의 3위 성적이 한국(3점, -1) 이하가 되어야만 합니다.</strong>
+                  </p>
+                </div>
+
+                <button 
+                  onClick={() => setShowHelpModal(false)}
+                  className="mt-6 w-full py-2 bg-slate-800 hover:bg-slate-750 font-bold text-xs text-white rounded-lg transition"
+                >
+                  확인했습니다
+                </button>
               </div>
-
-              <p>
-                대한민국은 최종 성적 <strong>승점 3점, 골득실 -1</strong>로 조 3위가 이미 확정되었습니다. 앞서 타 조의 경기 결과들로 인해 다른 조 3위인 보스니아, 에콰도르, 스웨덴, 파라과이는 전부 한국을 넘어섰습니다.
-              </p>
-              <p>
-                따라서 한국이 살아남기 위해선 아직 경기가 다 끝나지 않은 <strong>G, H, I, J, K, L조 중 최소 3개조 이상의 3위 성적이 한국(3점, -1) 이하가 되어야만 합니다.</strong>
-              </p>
             </div>
-
-            <button 
-              onClick={() => setShowHelpModal(false)}
-              className="mt-6 w-full py-2 bg-slate-800 hover:bg-slate-750 font-bold text-xs text-white rounded-lg transition"
-            >
-              확인했습니다
-            </button>
-          </div>
+          )}
         </div>
-      )}
-    </div>
-  );
-}
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
