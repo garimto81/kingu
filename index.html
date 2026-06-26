@@ -1,25 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026 북중미 월드컵 대한민국 32강 경우의 수 계산기</title>
+  <title>킹우의 수 - 한국은 32강을 갈수 있을까?</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React 18 및 ReactDOM 18 CDN -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <!-- Babel CDN (브라우저 내 실시간 JSX 컴파일) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script>
-    Babel.registerPreset('custom-react', {
-      presets: [
-        [Babel.availablePresets['react'], { runtime: 'classic' }]
-      ]
-    });
-  </script>
   <style>
-    /* 스크롤바 커스텀 스타일 */
+    /* 스크롤바 미세 디자인 */
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -33,1002 +22,804 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #334155;
     }
+    /* 스크롤 롤백 반영: 모바일 및 압축 해상도에서 자연스럽게 스크롤되도록 변경 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      width: 100vw;
+      overflow-y: auto;
+      background-color: #020617;
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-  <div id="root"></div>
+<body class="text-slate-100 font-sans select-none bg-slate-950">
 
-  <!-- React App Code with Premium Stock-style Chart and Cheers Comments Section -->
-  <script type="text/babel" data-presets="custom-react">
-    const { useState, useMemo } = React;
+  <!-- 메인 고정 레이아웃 바디 -->
+  <div class="min-h-screen w-full flex flex-col p-3 md:p-6 gap-4">
+    
+    <!-- 1. 상단 슬림 글로벌 헤더 -->
+    <header class="flex items-center justify-between border-b border-slate-900 pb-3 mb-1 shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="bg-red-600 p-1.5 rounded-lg shadow-md shadow-red-600/20">
+          <!-- Flame Icon SVG -->
+          <svg class="w-5 h-5 text-white animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+          </svg>
+        </div>
+        <h1 class="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
+          킹우의 수 - <span class="text-red-500">한국은 32강을 갈수 있을까?</span>
+        </h1>
+      </div>
+      
+      <div class="flex gap-1.5 shrink-0">
+        <button onclick="openHelpModal()" class="px-3 py-1 text-xs font-bold text-slate-300 bg-slate-900 border border-slate-800 rounded-md hover:bg-slate-800 transition-colors">
+          진출 규칙
+        </button>
+        <button onclick="applyPreset('reset')" class="px-3 py-1 text-xs font-bold text-slate-300 bg-slate-900 border border-slate-800 rounded-md hover:bg-slate-800 transition-colors">
+          초기화
+        </button>
+      </div>
+    </header>
 
-    // --- Lucide 아이콘들의 고품질 Inline SVG 대체 컴포넌트 정의 ---
-    const Flame = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
-      </svg>
-    );
+    <!-- 2. 메인 3열 레이아웃 (데스크톱에서는 나란히 배치, 모바일에서는 스크롤 가능하게 적응) -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+      
+      <!-- [1열 - Left] 초대형 진출 확률 판도 및 주식형 그래프 -->
+      <div class="lg:col-span-4 bg-slate-900/40 border border-slate-850 rounded-xl p-4 md:p-5 flex flex-col justify-between gap-6">
+        
+        <!-- 초대형 전광판 지표 -->
+        <div class="flex flex-col justify-between pb-3 border-b border-slate-850/60 shrink-0">
+          <span class="text-[9px] font-bold text-slate-500 tracking-widest block uppercase">KOREA PROBABILITY INDEX</span>
+          <div class="flex justify-between items-baseline mt-1.5">
+            <span id="giant-prob" class="text-5xl md:text-6xl font-black text-amber-400 font-mono tracking-tighter drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+              67.9%
+            </span>
+            <span id="giant-diff" class="text-xs font-bold font-mono px-2 py-0.5 rounded text-emerald-400 bg-emerald-950/30">
+              ▲ +0%
+            </span>
+          </div>
+        </div>
 
-    const CheckCircle = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-        <polyline points="22 4 12 14.01 9 11.01"/>
-      </svg>
-    );
+        <!-- 주식형 실시간 변동 가상 차트 영역 -->
+        <div class="flex-1 py-1">
+          <div class="bg-slate-950/70 rounded-lg p-3 border border-slate-850/50">
+            <div class="flex justify-between items-center text-[10px] text-slate-500 mb-2">
+              <span>PROBABILITY FLOW</span>
+              <span>금융 플랫폼 방식 실시간 차트</span>
+            </div>
+            <svg id="trend-svg" viewBox="0 0 500 110" class="w-full h-auto overflow-visible">
+              <defs>
+                <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.15"/>
+                  <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="line-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#f59e0b" />
+                  <stop offset="100%" stop-color="#ef4444" />
+                </linearGradient>
+              </defs>
 
-    const XCircle = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="15" y1="9" x2="9" y2="15"/>
-        <line x1="9" y1="9" x2="15" y2="15"/>
-      </svg>
-    );
+              <!-- 가이드라인 그리드 -->
+              <line x1="35" y1="20" x2="465" y2="20" stroke="#1e293b" stroke-dasharray="3" stroke-width="0.5" />
+              <text x="30" y="22" fill="#475569" fontSize="6.5" text-anchor="end" fontFamily="monospace">100%</text>
 
-    const AlertCircle = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-    );
+              <line x1="35" y1="60" x2="465" y2="60" stroke="#1e293b" stroke-dasharray="3" stroke-width="0.5" />
+              <text x="30" y="62" fill="#475569" fontSize="6.5" text-anchor="end" fontFamily="monospace">50%</text>
 
-    const RotateCcw = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-        <polyline points="3 3 3 8 8 8"/>
-      </svg>
-    );
+              <line x1="35" y1="100" x2="465" y2="100" stroke="#1e293b" stroke-width="0.5" />
+              <text x="30" y="102" fill="#475569" fontSize="6.5" text-anchor="end" fontFamily="monospace">0%</text>
 
-    const HelpCircle = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-    );
+              <!-- 동적 차트 엘리먼트 주입 구역 -->
+              <path id="chart-area" d="" fill="url(#area-grad)" />
+              <path id="chart-line" d="" fill="none" stroke="url(#line-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              <g id="chart-markers"></g>
+            </svg>
+          </div>
+        </div>
 
-    const TrendingUp = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-        <polyline points="17 6 23 6 23 12"/>
-      </svg>
-    );
+        <!-- 슬라이더 타임 트래커 조절구 -->
+        <div class="pt-3 border-t border-slate-850/60 shrink-0 space-y-1.5">
+          <div class="flex justify-between items-center text-[10px] text-slate-400">
+            <span class="font-semibold flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              타임 트래커 시뮬레이션
+            </span>
+            <span>동기화 시각: <strong id="sync-time-label" class="text-amber-400 font-mono">02:00</strong></span>
+          </div>
+          <input 
+            type="range" 
+            id="time-slider"
+            min="0" 
+            max="5" 
+            value="5"
+            oninput="handleTimeSlider(this.value)"
+            class="w-full accent-amber-500 bg-slate-950 h-1.5 rounded-lg cursor-pointer"
+          />
+          <div class="grid grid-cols-6 text-[9px] text-slate-500 text-center font-mono">
+            <span onclick="handleTimeSlider(0)" class="cursor-pointer hover:text-slate-300">14:00</span>
+            <span onclick="handleTimeSlider(1)" class="cursor-pointer hover:text-slate-300">16:00</span>
+            <span onclick="handleTimeSlider(2)" class="cursor-pointer hover:text-slate-300">18:00</span>
+            <span onclick="handleTimeSlider(3)" class="cursor-pointer hover:text-slate-300">20:00</span>
+            <span onclick="handleTimeSlider(4)" class="cursor-pointer hover:text-slate-300">00:00</span>
+            <span onclick="handleTimeSlider(5)" class="cursor-pointer hover:text-slate-300 font-bold text-amber-400">02:00</span>
+          </div>
+        </div>
 
-    const Award = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="7"/>
-        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
-      </svg>
-    );
+        <!-- 필터 프리셋 버튼 모음 -->
+        <div class="grid grid-cols-4 gap-2 pt-3 border-t border-slate-850/60 mt-2 shrink-0">
+          <button onclick="applyPreset('best')" class="py-2 text-[10px] font-bold rounded bg-emerald-950/25 border border-emerald-800/10 text-emerald-400 hover:bg-emerald-900/30 transition-colors">최상 시나리오</button>
+          <button onclick="applyPreset('cutoff')" class="py-2 text-[10px] font-bold rounded bg-slate-800/60 border border-slate-700/20 text-slate-200 hover:bg-slate-700 transition-colors">3개 턱걸이</button>
+          <button onclick="applyPreset('worst')" class="py-2 text-[10px] font-bold rounded bg-red-950/25 border border-red-800/10 text-red-400 hover:bg-red-900/30 transition-colors">절망 시나리오</button>
+          <button onclick="applyPreset('reset')" class="py-2 text-[10px] font-bold rounded bg-slate-950 border border-slate-850 text-slate-500 hover:text-slate-300 transition-colors">초기화</button>
+        </div>
 
-    const Sparkles = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-      </svg>
-    );
+      </div>
 
-    const Calendar = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    );
+      <!-- [2열 - Center] 매치 목록 시뮬레이터 (높이에 따른 자동 스크롤과 유연한 리스트 제공) -->
+      <div class="lg:col-span-4 bg-slate-900/40 border border-slate-850 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
+        <div class="pb-2 border-b border-slate-850/60 shrink-0 flex items-center justify-between">
+          <h3 class="text-xs font-black text-slate-300 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            시간순 매치 시뮬레이터 (경기 예측)
+          </h3>
+          <span class="text-[9px] text-slate-500 font-mono">가시성 보정 완료</span>
+        </div>
 
-    const Info = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="16" x2="12" y2="12"/>
-        <line x1="12" y1="8" x2="12.01" y2="8"/>
-      </svg>
-    );
+        <!-- 스크롤 활성화 가로세로 유연 컨테이너 -->
+        <div id="match-cards-container" class="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3 py-3 overflow-y-auto max-h-[500px] lg:max-h-[600px] pr-1">
+          <!-- JS를 통해 동적 생성 주입됨 -->
+        </div>
 
-    const Clock = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-    );
+        <!-- 설명 가이드바 -->
+        <div class="bg-slate-950/50 p-2 rounded border border-slate-850 text-[9px] text-slate-500 flex gap-1.5 items-center shrink-0 mt-1">
+          <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>시간 슬라이더가 왼쪽에 있으면 미래 경기 카드 옵션이 비활성화됩니다.</span>
+        </div>
+      </div>
 
-    const MessageSquare = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    );
+      <!-- [3열 - Right] 실시간 조별 순위표 및 실시간 응원방 -->
+      <div class="lg:col-span-4 flex flex-col gap-4 overflow-hidden h-full">
+        
+        <!-- 실시간 3위 와일드카드 테이블 판넬 -->
+        <div class="bg-slate-900/40 border border-slate-850 rounded-xl p-4 flex flex-col overflow-hidden h-[300px] lg:h-[340px]">
+          <div class="pb-2 border-b border-slate-850/60 shrink-0 flex items-center justify-between">
+            <h3 class="text-xs font-black text-slate-300 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+              실시간 3위 와일드카드 순위표
+            </h3>
+          </div>
 
-    const ThumbsUp = ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-      </svg>
-    );
+          <div class="flex-1 overflow-y-auto min-h-0 text-[11px] pr-1 mt-1">
+            <div class="p-1 bg-slate-950/80 text-[9px] text-slate-500 flex justify-between font-bold border-b border-slate-850">
+              <span>국가 및 조</span>
+              <div class="flex gap-5">
+                <span class="w-7 text-center">승점</span>
+                <span class="w-7 text-center">득실</span>
+                <span class="w-5 text-center">결과</span>
+              </div>
+            </div>
 
+            <!-- 동적 순위표 로직 주입 구역 -->
+            <div id="standings-tbody" class="divide-y divide-slate-850/40"></div>
+          </div>
+        </div>
 
-    function App() {
-      // 시간축 이정표 데이터 구성 (24시간/4시간 단위 타임라인 마일스톤)
-      const timelineMilestones = [
-        { time: '14:00', label: '경기 시작 전', activeGroup: null, desc: '67.9% 기준 확률 상태' },
-        { time: '16:00', label: 'G조 종료', activeGroup: 'G', desc: '이집트 vs 이란' },
-        { time: '18:00', label: 'H조 종료', activeGroup: 'H', desc: '스페인 vs 우루과이' },
-        { time: '20:00', label: 'I/J조 종료', activeGroup: 'I/J', desc: '세네갈/이라크 및 오스트리아/알제리' },
-        { time: '00:00', label: 'K조 종료', activeGroup: 'K', desc: 'DR콩고 vs 우즈벡' },
-        { time: '02:00', label: 'L조 최종종료', activeGroup: 'L', desc: '가나 vs 크로아티아' }
-      ];
+        <!-- 실시간 응원 댓글방 판넬 -->
+        <div class="bg-slate-900/40 border border-slate-850 rounded-xl p-4 flex flex-col justify-between overflow-hidden h-[260px] lg:h-[280px]">
+          <div class="pb-1.5 border-b border-slate-850/60 shrink-0 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              실시간 응원방
+            </h3>
+            <span id="comments-count" class="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono">0명 참여중</span>
+          </div>
 
-      const [selectedTimeIdx, setSelectedTimeIdx] = useState(5); // 기본값 최신 시점 (모든 결과 반영)
+          <!-- 댓글 목록 무한 스크롤러 구역 -->
+          <div id="comments-list" class="flex-1 overflow-y-auto space-y-2 py-2 pr-1 min-h-0 text-[11px]"></div>
 
-      // 경기 정보 설정 (시간 순서로 나열, 국기 이모지 극대화)
-      const initialScenarios = [
+          <!-- 댓글 폼 필드 -->
+          <form id="comment-form" onsubmit="handleCommentSubmit(event)" class="pt-2 border-t border-slate-850/60 space-y-1.5 shrink-0">
+            <div class="flex gap-1.5">
+              <input 
+                type="text" 
+                id="comment-nickname" 
+                placeholder="닉네임"
+                maxLength="8"
+                required
+                class="w-1/3 bg-slate-950 border border-slate-800 rounded p-1.5 text-[10px] text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+              <input 
+                type="text" 
+                id="comment-text" 
+                placeholder="응원 한마디 적기..."
+                maxLength="30"
+                required
+                class="w-2/3 bg-slate-950 border border-slate-800 rounded p-1.5 text-[10px] text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+            <button 
+              type="submit"
+              class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[10px] py-1.5 rounded transition-colors"
+            >
+              응원 메시지 전송
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 규칙 모달 레이아웃 -->
+  <div id="help-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in duration-200">
+      <h4 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        경우의 수 및 와일드카드 규정 안내
+      </h4>
+      
+      <div class="space-y-3.5 text-xs text-slate-300 leading-relaxed">
+        <p>
+          이번 2026 월드컵은 참가국이 48개국으로 대폭 확대되면서, 기존과 완전히 다른 새로운 조별리그 룰이 적용됩니다.
+        </p>
+        
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-850 space-y-1.5 font-medium text-slate-400">
+          <p class="text-amber-500 font-bold mb-1">핵심 요약 규칙</p>
+          <p>1. 각 조 1위 및 2위(총 24개팀)는 무조건 진출</p>
+          <p>2. 조 3위 12개 국가 중 성적 상위 8개 팀만 32강 합류</p>
+          <p>3. 조 3위 성적 비교: 승점 → 골득실 → 다득점 순</p>
+        </div>
+
+        <p>
+          대한민국은 최종 성적 <strong>승점 3점, 골득실 -1</strong>로 조 3위가 이미 확정되었습니다. 앞서 타 조의 경기 결과들로 인해 다른 조 3위인 보스니아, 에콰도르, 스웨덴, 파라과이는 전부 한국을 넘어섰습니다.
+        </p>
+        <p>
+          따라서 한국이 살아남기 위해선 아직 경기가 다 끝나지 않은 <strong>G, H, I, J, K, L조 중 최소 3개조 이상의 3위 성적이 한국(3점, -1) 이하가 되어야만 합니다.</strong>
+        </p>
+      </div>
+
+      <button 
+        onclick="closeHelpModal()"
+        class="mt-6 w-full py-2 bg-slate-800 hover:bg-slate-750 font-bold text-xs text-white rounded-lg transition-colors"
+      >
+        확인했습니다
+      </button>
+    </div>
+  </div>
+
+  <!-- 비동기 스크립트 실행 제어 -->
+  <script>
+    // 대시보드 상태 저장 전역 변수
+    const state = {
+      selectedTimeIdx: 5,
+      scenarios: [
         {
           id: 1,
           group: 'G',
           flagHome: '🇪🇬',
           flagAway: '🇮🇷',
-          title: '이집트 🇪🇬 vs 이란 🇮🇷',
-          timeSlot: 1, // 16:00
-          detail: '이집트가 우세하면 이란이 승점 2점에 머물게 되어 대한민국 아래로 가라앉습니다.',
+          title: '이집트 vs 이란',
+          timeSlot: 1, 
+          detail: '이집트가 이겨 이란이 승점 2점에 머물러야 합니다.',
           options: [
-            { label: '이집트 승리 🇪🇬', effect: 'success', desc: '이란 승점 2점 묶임 (한국 극도로 유리)' },
-            { label: '무승부 🤝', effect: 'fail', desc: '이란 승점 3점, 골득실 우위 유지 (한국 악재)' },
-            { label: '이란 승리 🇮🇷', effect: 'fail', desc: '이란 자력 16강 승점 5점 획득 (한국 불리)' }
+            { label: '이집트 승 🇪🇬', effect: 'success', desc: '이란 승점 2점 묶임 (유리)' },
+            { label: '무승부 🤝', effect: 'fail', desc: '이란 승점 3점 (불리)' },
+            { label: '이란 승 🇮🇷', effect: 'fail', desc: '이란 승점 5점 (불리)' }
           ],
-          selected: 'pending',
+          selected: null,
         },
         {
           id: 2,
           group: 'H',
           flagHome: '🇪🇸',
           flagAway: '🇺🇾',
-          title: '스페인 🇪🇸 vs 우루과이 🇺🇾',
-          timeSlot: 2, // 18:00
-          detail: '무적함대 스페인이 우루과이를 진압해야 우루과이가 승점 2점에 머뭅니다.',
+          title: '스페인 vs 우루과이',
+          timeSlot: 2, 
+          detail: '스페인이 이겨 우루과이를 승점 2점에 묶어둡니다.',
           options: [
-            { label: '스페인 승리 🇪🇸', effect: 'success', desc: '우루과이 승점 2점 유지 (한국 생존 활로)' },
-            { label: '무승부 🤝', effect: 'fail', desc: '우루과이 승점 3점, 득실 우세 (한국 압박)' },
-            { label: '우루과이 승리 🇺🇾', effect: 'fail', desc: '우루과이 승점 5점 확보 (한국 치명타)' }
+            { label: '스페인 승 🇪🇸', effect: 'success', desc: '우루과이 승점 2점 (한국 유리)' },
+            { label: '무승부 🤝', effect: 'fail', desc: '우루과이 승점 3점 (한국 불리)' },
+            { label: '우루과이 승 🇺🇾', effect: 'fail', desc: '우루과이 승점 5점 (한국 불리)' }
           ],
-          selected: 'pending',
+          selected: null,
         },
         {
           id: 3,
           group: 'I',
           flagHome: '🇸🇳',
           flagAway: '🇮🇶',
-          title: '세네갈 🇸🇳 vs 이라크 🇮🇶',
-          timeSlot: 3, // 20:00
-          detail: '서로 크게 이기지 않고 무승부를 피해야 한국의 골득실(-1)이 세네갈을 누릅니다.',
+          title: '세네갈 vs 이라크',
+          timeSlot: 3, 
+          detail: '접전승으로 한쪽의 골득실을 -2로 깎아야 유리합니다.',
           options: [
-            { label: '세네갈 1골차 승 🇸🇳', effect: 'success', desc: '세네갈 골득실 -2로 강등 (한국 우세)' },
-            { label: '이라크 4골차이하 승 🇮🇶', effect: 'success', desc: '이라크 골득실 -2로 정체 (한국 우세)' },
-            { label: '무승부 또는 큰 점수차', effect: 'fail', desc: '승점 4점 획득팀 출현으로 한국에 치명적' }
+            { label: '세네갈 1점차 🇸🇳', effect: 'success', desc: '세네갈 골득실 -2 (한국 우세)' },
+            { label: '이라크 4점차↓ 🇮🇶', effect: 'success', desc: '이라크 골득실 -2 (한국 우세)' },
+            { label: '무승부/대승 결과', effect: 'fail', desc: '상대 승점 4점 획득 (한국 불리)' }
           ],
-          selected: 'pending',
+          selected: null,
         },
         {
           id: 4,
           group: 'J',
           flagHome: '🇦🇹',
           flagAway: '🇩🇿',
-          title: '오스트리아 🇦🇹 vs 알제리 🇩🇿',
-          timeSlot: 3, // 20:00
-          detail: '오스트리아가 알제리를 잡거나, 혹은 알제리가 매우 큰 스코어차로 대승을 해버려야 합니다.',
+          title: '오스트리아 vs 알제리',
+          timeSlot: 3, 
+          detail: '오스트리아가 이기거나 알제리가 대승해야 합니다.',
           options: [
-            { label: '오스트리아 승 🇦🇹', effect: 'success', desc: '알제리 승점 3점, 골득실 -2로 저지 (한국 생존)' },
-            { label: '알제리 2골차이상 승 🇩🇿', effect: 'success', desc: '오스트리아 골득실 -2 이하로 저지 (한국 생존)' },
-            { label: '알제리 1골차 승 또는 무', effect: 'fail', desc: '오스트리아/알제리 승점 4점대로 한국 추월' }
+            { label: '오스트리아 승 🇦🇹', effect: 'success', desc: '알제리 골득실 -2 저지 (유리)' },
+            { label: '알제리 2골차승 🇩🇿', effect: 'success', desc: '오스트리아 득실 -2 이하 (유리)' },
+            { label: '알제리 접전승/무', effect: 'fail', desc: '상대 승점 4점대 돌파 (불리)' }
           ],
-          selected: 'pending',
+          selected: null,
         },
         {
           id: 5,
           group: 'K',
           flagHome: '🇨🇩',
           flagAway: '🇺🇿',
-          title: 'DR콩고 🇨🇩 vs 우즈베키스탄 🇺🇿',
-          timeSlot: 4, // 00:00
-          detail: '우즈벡이 수비망을 굳건히 하여 DR콩고의 승리를 저지해내야 합니다.',
+          title: 'DR콩고 vs 우즈베키스탄',
+          timeSlot: 4, 
+          detail: '우즈벡이 선방하여 DR콩고의 승리를 막아야 합니다.',
           options: [
-            { label: '우즈베키스탄 승 🇺🇿', effect: 'success', desc: 'DR콩고 최종 승점 1점 정체 (한국 생존)' },
-            { label: '무승부 🤝', effect: 'success', desc: 'DR콩고 최종 승점 2점 묶임 (한국 생존)' },
-            { label: 'DR콩고 승리 🇨🇩', effect: 'fail', desc: 'DR콩고 승점 4점 돌파로 한국 추월' }
+            { label: '우즈벡 승 🇺🇿', effect: 'success', desc: 'DR콩고 승점 1점 정체 (유리)' },
+            { label: '무승부 🤝', effect: 'success', desc: 'DR콩고 승점 2점 묶임 (유리)' },
+            { label: 'DR콩고 승 🇨🇩', effect: 'fail', desc: 'DR콩고 승점 4점 돌파 (불리)' }
           ],
-          selected: 'pending',
+          selected: null,
         },
         {
           id: 6,
           group: 'L',
           flagHome: '🇬🇭',
           flagAway: '🇭🇷',
-          title: '가나 🇬🇭 vs 크로아티아 🇭🇷',
-          timeSlot: 5, // 02:00
-          detail: '가나가 크로아티아의 골문을 폭격하여 크로아티아의 골득실을 대폭 깎아야 합니다.',
+          title: '가나 vs 크로아티아',
+          timeSlot: 5, 
+          detail: '가나가 크로아티아를 잡고 득실차를 깎아야 합니다.',
           options: [
-            { label: '가나 승리 🇬🇭', effect: 'success', desc: '크로아티아 승점 3점, 골득실 -2 하락 (한국 진출)' },
-            { label: '무승부 🤝', effect: 'fail', desc: '크로아티아 승점 4점 획득 (한국 진출 실패)' },
-            { label: '크로아티아 승 🇭🇷', effect: 'fail', desc: '크로아티아 승점 6점 점프 (한국 진출 실패)' }
+            { label: '가나 승 🇬🇭', effect: 'success', desc: '크로아티아 골득실 -2 이하 (유리)' },
+            { label: '무승부 🤝', effect: 'fail', desc: '크로아티아 승점 4점 확보 (탈락)' },
+            { label: '크로아티아 승 🇭🇷', effect: 'fail', desc: '크로아티아 승점 6점 도약 (탈락)' }
           ],
-          selected: 'pending',
+          selected: null,
         },
-      ];
-
-      const [scenarios, setScenarios] = useState(initialScenarios);
-      const [showHelpModal, setShowHelpModal] = useState(false);
-
-      // 실시간 댓글 데이터 정의 (닉네임, 코멘트, 작성 시간, 따봉수)
-      const [commentInput, setCommentInput] = useState('');
-      const [nicknameInput, setNicknameInput] = useState('');
-      const [comments, setComments] = useState([
-        { id: 1, nickname: '상암동붉은악마', text: '남아공전 패배 진짜 뼈아프다.. 그래도 아직 희망의 끈은 남았네 ㅠㅠ 가나 형들 제발 한 번만!', likes: 45, time: '3분 전' },
-        { id: 2, nickname: '킹갓흥7', text: '와 진짜 주식 차트 요동치는 거 마냥 내 가슴도 웅장해지네.. 이집트 승리는 무조건 가야함!!', likes: 32, time: '11분 전' },
-        { id: 3, nickname: '축잘알옵타', text: '경우의 수 확률 실시간으로 100% 찍는 시뮬레이션 돌려보는 거 존잼ㅋㅋㅋ 3개만 성립되면 끝이다 힘내자!!', likes: 21, time: '20분 전' },
-        { id: 4, nickname: '홍명보호맘', text: '자력으로 못 가고 기도 메타 하는 건 킹받지만.. 우즈벡 무승부만 캐리해줘도 절반은 먹고 간다.', likes: 14, time: '40분 전' }
-      ]);
-
-      const handleOptionSelect = (id, optionIdx) => {
-        setScenarios(prev => prev.map(s => {
-          if (s.id === id) {
-            return { ...s, selected: s.selected === optionIdx ? 'pending' : optionIdx };
-          }
-          return s;
-        }));
-      };
-
-      const handleLikeComment = (id) => {
-        setComments(prev => prev.map(c => c.id === id ? { ...c, likes: c.likes + 1 } : c));
-      };
-
-      const handleAddComment = (e) => {
-        e.preventDefault();
-        if (!commentInput.trim()) return;
-        const nickname = nicknameInput.trim() || '익명의축구팬';
-        const newComment = {
-          id: Date.now(),
-          nickname,
-          text: commentInput,
-          likes: 0,
-          time: '방금 전'
-        };
-        setComments([newComment, ...comments]);
-        setCommentInput('');
-        setNicknameInput('');
-      };
-
-      const applyPreset = (type) => {
-        if (type === 'best') {
-          setScenarios(prev => prev.map(s => {
-            const successIdx = s.options.findIndex(opt => opt.effect === 'success');
-            return { ...s, selected: successIdx !== -1 ? successIdx : 'pending' };
-          }));
-          setSelectedTimeIdx(5);
-        } else if (type === 'worst') {
-          setScenarios(prev => prev.map(s => {
-            const failIdx = s.options.findIndex(opt => opt.effect === 'fail');
-            return { ...s, selected: failIdx !== -1 ? failIdx : 'pending' };
-          }));
-          setSelectedTimeIdx(5);
-        } else if (type === 'cutoff') {
-          setScenarios(prev => prev.map(s => {
-            const targetEffect = [1, 2, 5].includes(s.id) ? 'success' : 'fail';
-            const idx = s.options.findIndex(opt => opt.effect === targetEffect);
-            return { ...s, selected: idx !== -1 ? idx : 'pending' };
-          }));
-          setSelectedTimeIdx(5);
-        } else {
-          setScenarios(prev => prev.map(s => ({ ...s, selected: 'pending' })));
-          setSelectedTimeIdx(0); 
-        }
-      };
-
-      // 타임슬라이더 상태에 따른 가상 시나리오 동기화 필터링
-      const getActiveStatusAtSelectedTime = (groupName) => {
-        const scenario = scenarios.find(s => s.group === groupName);
-        if (!scenario) return 'pending';
-        if (scenario.timeSlot > selectedTimeIdx) {
-          return 'pending';
-        }
-        if (scenario.selected === 'pending') return 'pending';
-        return scenario.options[scenario.selected].effect;
-      };
-
-      // 12개조 3위 테이블 연산 (타임슬라이더 동기화)
-      const standings = useMemo(() => {
-        const baseTeams = [
-          { id: 'KOR', name: '대한민국 🇰🇷', group: 'A', pts: 3, gd: -1, fixed: true, desc: '한국 조별리그 최종 성적' },
-          { id: 'BIH', name: '보스니아 🇧🇦', group: 'B', pts: 4, gd: 0, fixed: true, desc: '진출 유력 (승점 4)' },
-          { id: 'SCO', name: '스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C', pts: 3, gd: -3, fixed: true, desc: '한국보다 아래 확정' },
-          { id: 'PRY', name: '파라과이 🇵🇾', group: 'D', pts: 4, gd: -1, fixed: true, desc: '진출 유력 (승점 4)' },
-          { id: 'ECU', name: '에콰도르 🇪🇨', group: 'E', pts: 4, gd: 0, fixed: true, desc: '진출 유력 (승점 4)' },
-          { id: 'SWE', name: '스웨덴 🇸🇪', group: 'F', pts: 4, gd: 1, fixed: true, desc: '진출 유력 (승점 4)' },
-        ];
-
-        const statusG = getActiveStatusAtSelectedTime('G');
-        const statusH = getActiveStatusAtSelectedTime('H');
-        const statusI = getActiveStatusAtSelectedTime('I');
-        const statusJ = getActiveStatusAtSelectedTime('J');
-        const statusK = getActiveStatusAtSelectedTime('K');
-        const statusL = getActiveStatusAtSelectedTime('L');
-
-        // G조 가상 계산
-        let teamG = { id: 'G', name: 'G조 3위 (이란/벨기에)', group: 'G', pts: 3, gd: 0, fixed: false };
-        if (statusG === 'success') {
-          teamG = { ...teamG, name: '이란 🇮🇷 (G조 3위)', pts: 2, gd: -2, desc: '이집트 승리로 이란 부진' };
-        } else if (statusG === 'fail') {
-          teamG = { ...teamG, name: '벨기에 🇧🇪 (G조 3위)', pts: 4, gd: 0, desc: '이란 무승부 이상으로 승점 상승' };
-        } else {
-          teamG = { ...teamG, name: 'G조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태' };
-        }
-
-        // H조 가상 계산
-        let teamH = { id: 'H', name: 'H조 3위 (우루과이)', group: 'H', pts: 3, gd: 0, fixed: false };
-        if (statusH === 'success') {
-          teamH = { ...teamH, name: '우루과이 🇺🇾 (H조 3위)', pts: 2, gd: -2, desc: '스페인 승리로 우루과이 차단' };
-        } else if (statusH === 'fail') {
-          teamH = { ...teamH, name: '우루과이 🇺🇾 (H조 3위)', pts: 4, gd: 0, desc: '우루과이 승점 획득에 성공' };
-        } else {
-          teamH = { ...teamH, name: 'H조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태' };
-        }
-
-        // I조 가상 계산
-        let teamI = { id: 'I', name: 'I조 3위 (이라크/세네갈)', group: 'I', pts: 3, gd: 0, fixed: false };
-        if (statusI === 'success') {
-          teamI = { ...teamI, name: '세네갈 🇸🇳 (I조 3위)', pts: 3, gd: -2, desc: '최소 격차 승리로 한국 득실 우세' };
-        } else if (statusI === 'fail') {
-          teamI = { ...teamI, name: '이라크 🇮🇶 (I조 3위)', pts: 4, gd: 1, desc: '한국에 불리한 무승부/대승 발생' };
-        } else {
-          teamI = { ...teamI, name: 'I조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태' };
-        }
-
-        // J조 가상 계산
-        let teamJ = { id: 'J', name: 'J조 3위 (오스트리아/알제리)', group: 'J', pts: 3, gd: 0, fixed: false };
-        if (statusJ === 'success') {
-          teamJ = { ...teamJ, name: '알제리 🇩🇿 (J조 3위)', pts: 3, gd: -2, desc: '알제리 패배 혹은 오스트리아 대승' };
-        } else if (statusJ === 'fail') {
-          teamJ = { ...teamJ, name: '오스트리아 🇦🇹 (J조 3위)', pts: 4, gd: 1, desc: '한국에 불리한 스코어 상황' };
-        } else {
-          teamJ = { ...teamJ, name: 'J조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태' };
-        }
-
-        // K조 가상 계산
-        let teamK = { id: 'K', name: 'K조 3위 (DR콩고)', group: 'K', pts: 3, gd: 0, fixed: false };
-        if (statusK === 'success') {
-          teamK = { ...teamK, name: 'DR콩고 🇨🇩 (K조 3위)', pts: 2, gd: -1, desc: '우즈벡 선방으로 DR콩고 저지' };
-        } else if (statusK === 'fail') {
-          teamK = { ...teamK, name: 'DR콩고 🇨🇩 (K조 3위)', pts: 4, gd: 1, desc: 'DR콩고가 이기면서 한국 추월' };
-        } else {
-          teamK = { ...teamK, name: 'K조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태' };
-        }
-
-        // L조 가상 계산
-        let teamL = { id: 'L', name: 'L조 3위 (크로아티아)', group: 'L', pts: 3, gd: 0, fixed: false };
-        if (statusL === 'success') {
-          teamL = { ...teamL, name: '크로아티아 🇭🇷 (L조 3위)', pts: 3, gd: -2, desc: '가나 승리로 크로아티아 득실 하락' };
-        } else if (statusL === 'fail') {
-          teamL = { ...teamL, name: '크로아티아 🇭🇷 (L조 3위)', pts: 4, gd: 0, desc: '크로아티아 승점 추가' };
-        } else {
-          teamL = { ...teamL, name: 'L조 3위 (대기중)', pts: 3, gd: 0, desc: '경기 전 대기 상태' };
-        }
-
-        const allTeams = [...baseTeams, teamG, teamH, teamI, teamJ, teamK, teamL];
-
-        return allTeams.sort((a, b) => {
-          if (b.pts !== a.pts) return b.pts - a.pts;
-          return b.gd - a.gd;
-        });
-      }, [scenarios, selectedTimeIdx]);
-
-      // 사용자 예측 결과에 따른 단계별 진출 확률 동적 매핑
-      const probabilityTrend = useMemo(() => {
-        const baseProb = 67.93; // baseline 오피셜 확률
-
-        const weights = {
-          G: { success: 9.5, fail: -15.0 },
-          H: { success: 9.5, fail: -15.0 },
-          I: { success: 4.5, fail: -10.0 },
-          J: { success: 4.5, fail: -10.0 },
-          K: { success: 9.5, fail: -15.0 },
-          L: { success: 10.5, fail: -15.0 },
-        };
-
-        const getEffectValue = (groupName) => {
-          const s = scenarios.find(item => item.group === groupName);
-          if (!s || s.selected === 'pending') return 0;
-          const effect = s.options[s.selected].effect;
-          return weights[groupName][effect];
-        };
-
-        let prob0 = baseProb;
-        let prob1 = Math.max(0, Math.min(100, prob0 + getEffectValue('G')));
-        let prob2 = Math.max(0, Math.min(100, prob1 + getEffectValue('H')));
-        let prob3 = Math.max(0, Math.min(100, prob2 + getEffectValue('I') + getEffectValue('J')));
-        let prob4 = Math.max(0, Math.min(100, prob3 + getEffectValue('K')));
-
-        let prob5;
-        const successes = scenarios.filter(s => s.selected !== 'pending' && s.options[s.selected].effect === 'success').length;
-        const fails = scenarios.filter(s => s.selected !== 'pending' && s.options[s.selected].effect === 'fail').length;
-        const totalSelected = successes + fails;
-
-        if (totalSelected === 6) {
-          prob5 = successes >= 3 ? 100 : 0;
-        } else {
-          prob5 = Math.max(0, Math.min(100, prob4 + getEffectValue('L')));
-          if (successes >= 3) prob5 = Math.max(92, prob5);
-          if (fails > 3) prob5 = Math.min(8, prob5);
-        }
-
-        return [
-          { time: '14:00', val: parseFloat(prob0.toFixed(1)) },
-          { time: '16:00', val: parseFloat(prob1.toFixed(1)) },
-          { time: '18:00', val: parseFloat(prob2.toFixed(1)) },
-          { time: '20:00', val: parseFloat(prob3.toFixed(1)) },
-          { time: '00:00', val: parseFloat(prob4.toFixed(1)) },
-          { time: '02:00', val: parseFloat(prob5.toFixed(1)) }
-        ];
-      }, [scenarios]);
-
-      // 현재 시뮬레이션된 최신 시간의 확률 얻기
-      const currentProbability = probabilityTrend[selectedTimeIdx].val;
-      const initialProbability = probabilityTrend[0].val;
-      const probabilityDiff = parseFloat((currentProbability - initialProbability).toFixed(1));
-
-      // 조건 충족수
-      const totalMet = useMemo(() => {
-        return scenarios.filter(s => s.selected !== 'pending' && s.options[s.selected].effect === 'success').length;
-      }, [scenarios]);
-
-      const totalFailed = useMemo(() => {
-        return scenarios.filter(s => s.selected !== 'pending' && s.options[s.selected].effect === 'fail').length;
-      }, [scenarios]);
-
-      const koreaRank = standings.findIndex(t => t.id === 'KOR') + 1;
-
-      const koreaStatus = useMemo(() => {
-        if (totalMet >= 3) {
-          return {
-            label: '32강 진출 확정',
-            colorClass: 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20',
-            badgeClass: 'bg-emerald-500 text-white',
-            desc: '축하합니다! 희망 경기 아웃컴 3개 이상이 매칭되어 대한민국이 와일드카드로 32강행을 매듭짓습니다.'
-          };
-        } else if (totalFailed > 3) {
-          return {
-            label: '조별리그 탈락 확정',
-            colorClass: 'text-red-400 bg-red-950/40 border-red-500/20',
-            badgeClass: 'bg-red-500 text-white',
-            desc: '아쉽게도 탈락 조건이 누적되어 상위 8개 와일드카드 진출국 안에 합류하지 못했습니다.'
-          };
-        } else {
-          return {
-            label: '실시간 조건 연산중',
-            colorClass: 'text-amber-400 bg-amber-950/40 border-amber-500/20',
-            badgeClass: 'bg-amber-500 text-slate-950',
-            desc: '남은 경기의 시간대별 결과에 따라 운명이 결정됩니다. 하단의 국가 국기 매치를 선택해 확률 변동을 예측해 보세요.'
-          };
-        }
-      }, [totalMet, totalFailed]);
-
-      // 주식 전광판용 프리미엄 라인 그래프 드로잉 좌표 (viewBox="0 0 500 150")
-      const chartPoints = useMemo(() => {
-        const xCoords = [35, 120, 205, 290, 375, 465];
-        const points = probabilityTrend.map((pt, i) => {
-          const x = xCoords[i];
-          const y = 140 - (pt.val / 100) * 115;
-          return { x, y, val: pt.val, time: pt.time };
-        });
-
-        const linePath = points.reduce((path, pt, i) => {
-          return path + (i === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`);
-        }, '');
-
-        const areaPath = linePath + ` L ${points[points.length - 1].x} 140 L ${points[0].x} 140 Z`;
-
-        return { points, linePath, areaPath };
-      }, [probabilityTrend]);
-
-      return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 antialiased">
-          
-          {/* 상단 글로벌 헤더 */}
-          <header className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between border-b border-slate-900 pb-5 mb-6 gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-red-600 p-2 rounded-xl shadow-lg shadow-red-600/10">
-                <Flame className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                  2026 월드컵 대한민국 <span className="text-red-500">32강 경우의 수 대시보드</span>
-                </h1>
-                <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5 font-mono">
-                  <Calendar className="w-3.5 h-3.5" /> 2026. 06. 26. 14:45 KST (G~L조 시나리오 시뮬레이션 모델)
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setShowHelpModal(true)}
-                className="px-3 py-1.5 text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition flex items-center gap-1.5"
-              >
-                <HelpCircle className="w-3.5 h-3.5" /> 와일드카드 정보
-              </button>
-              <button 
-                onClick={() => applyPreset('reset')}
-                className="px-3 py-1.5 text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition flex items-center gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" /> 기본화면 리셋
-              </button>
-            </div>
-          </header>
-
-          <main className="max-w-6xl mx-auto space-y-6">
-            
-            {/* 레이아웃 파트 1: 초대형 전광판 대시보드 및 주식형 확률 그래프 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* 왼쪽 2열: 초대형 확률 패널 + 주식형 실시간 변동 차트 */}
-              <div className="lg:col-span-2 bg-slate-900/40 border border-slate-850 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 blur-3xl rounded-full"></div>
-                
-                {/* 1. 초대형 확률 전광판 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-slate-850/60">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">
-                      KOREA PROBABILITY INDEX
-                    </span>
-                    <h2 className="text-sm font-extrabold text-slate-300 flex items-center gap-1.5">
-                      대한민국 32강 와일드카드 생존 확률
-                    </h2>
-                  </div>
-                  
-                  {/* 거대 지표 숫자 */}
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-5xl md:text-6xl font-black tracking-tighter text-amber-400 font-mono drop-shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-                      {currentProbability}%
-                    </span>
-                    <div className="flex flex-col">
-                      <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded ${
-                        probabilityDiff >= 0 ? 'text-emerald-400 bg-emerald-950/40' : 'text-red-400 bg-red-950/40'
-                      }`}>
-                        {probabilityDiff >= 0 ? `▲ +${probabilityDiff}%` : `▼ ${probabilityDiff}%`}
-                      </span>
-                      <span className="text-[9px] text-slate-500 text-right mt-1">vs 14:00 시작전</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. 주식 거래소 스타일 확률 변동 그래프 */}
-                <div className="py-4">
-                  <div className="flex items-center justify-between mb-3 text-xs">
-                    <span className="text-slate-400 font-semibold flex items-center gap-1">
-                      <TrendingUp className="w-3.5 h-3.5 text-amber-500" /> 실시간 변동 가이드라인 (시간대별)
-                    </span>
-                    <span className="text-slate-500 font-mono">가로축: KST 시간별 경기 시나리오 매칭</span>
-                  </div>
-
-                  <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-850/60 relative">
-                    <svg viewBox="0 0 500 150" className="w-full h-auto overflow-visible">
-                      <defs>
-                        <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.22"/>
-                          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0"/>
-                        </linearGradient>
-                        <linearGradient id="chart-line-grad" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#f59e0b" />
-                          <stop offset="100%" stopColor="#ef4444" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* 격자 수평선 */}
-                      <line x1="35" y1="25" x2="465" y2="25" stroke="#1e293b" strokeDasharray="3" strokeWidth="0.5" />
-                      <text x="30" y="28" fill="#475569" fontSize="7" textAnchor="end" fontFamily="monospace">100%</text>
-
-                      <line x1="35" y1="82.5" x2="465" y2="82.5" stroke="#1e293b" strokeDasharray="3" strokeWidth="0.5" />
-                      <text x="30" y="85.5" fill="#475569" fontSize="7" textAnchor="end" fontFamily="monospace">50%</text>
-
-                      <line x1="35" y1="140" x2="465" y2="140" stroke="#1e293b" strokeWidth="0.5" />
-                      <text x="30" y="143" fill="#475569" fontSize="7" textAnchor="end" fontFamily="monospace">0%</text>
-
-                      {/* 면적 그라데이션 그리기 */}
-                      <path d={chartPoints.areaPath} fill="url(#chart-area-grad)" />
-
-                      {/* 라인 드로잉 */}
-                      <path d={chartPoints.linePath} fill="none" stroke="url(#chart-line-grad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-
-                      {/* 축별 포인트 서클 렌더링 */}
-                      {chartPoints.points.map((pt, i) => {
-                        const isSelected = i === selectedTimeIdx;
-                        return (
-                          <g key={i}>
-                            {isSelected && (
-                              <circle cx={pt.x} cy={pt.y} r="8" fill="#f59e0b" fillOpacity="0.25" className="animate-ping" />
-                            )}
-                            <circle 
-                              cx={pt.x} 
-                              cy={pt.y} 
-                              r={isSelected ? "5" : "3.5"} 
-                              fill={isSelected ? "#f59e0b" : "#334155"} 
-                              stroke="#020617" 
-                              strokeWidth="1.5"
-                              className="cursor-pointer hover:scale-125 transition-transform"
-                              onClick={() => setSelectedTimeIdx(i)}
-                            />
-                            <text x={pt.x} y={pt.y - 10} fill={isSelected ? "#f59e0b" : "#64748b"} fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                              {pt.val}%
-                            </text>
-                            <text x={pt.x} y="148" fill={isSelected ? "#f59e0b" : "#475569"} fontSize="8" fontWeight={isSelected ? "bold" : "normal"} textAnchor="middle">
-                              {pt.time}
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </svg>
-                  </div>
-                </div>
-
-                {/* 3. 실시간 타임 트래커 슬라이더 */}
-                <div className="pt-3 border-t border-slate-850/60 mt-2">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 mb-2 text-xs">
-                    <span className="text-slate-400 font-semibold flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-500" /> 타임 트래커 시점 동기화
-                    </span>
-                    <span className="text-slate-500">
-                      슬라이더 위치: <strong className="text-amber-400">{timelineMilestones[selectedTimeIdx].time} ({timelineMilestones[selectedTimeIdx].label})</strong>
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="5" 
-                      value={selectedTimeIdx}
-                      onChange={(e) => setSelectedTimeIdx(parseInt(e.target.value))}
-                      className="w-full accent-amber-500 bg-slate-950 h-2 rounded-lg cursor-pointer border border-slate-800"
-                    />
-                    <div className="grid grid-cols-6 text-[9px] text-center text-slate-500 font-bold">
-                      {timelineMilestones.map((mil, idx) => (
-                        <div 
-                          key={idx}
-                          onClick={() => setSelectedTimeIdx(idx)}
-                          className={`cursor-pointer transition-colors ${idx === selectedTimeIdx ? 'text-amber-400' : 'hover:text-slate-300'}`}
-                        >
-                          {mil.time}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* 오른쪽 1열: 실시간 응원방 및 가상 훈수방 (추천 기능 포함) */}
-              <div className="bg-slate-900/40 border border-slate-850 rounded-2xl p-5 flex flex-col justify-between backdrop-blur-md">
-                
-                {/* 댓글창 상단 헤더 */}
-                <div className="pb-3 border-b border-slate-850/60 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-amber-500" />
-                    <h3 className="text-sm font-bold text-slate-200">실시간 경우의 수 훈수방</h3>
-                  </div>
-                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-mono">
-                    {comments.length}명 참여중
-                  </span>
-                </div>
-
-                {/* 댓글 목록 */}
-                <div className="flex-1 overflow-y-auto max-h-[220px] lg:max-h-[250px] space-y-3 py-3 pr-1">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="bg-slate-950/60 rounded-lg p-2.5 border border-slate-850/40 text-xs">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-amber-400">{comment.nickname}</span>
-                        <span className="text-[9px] text-slate-500 font-mono">{comment.time}</span>
-                      </div>
-                      <p className="text-slate-300 mb-2 leading-relaxed">{comment.text}</p>
-                      
-                      {/* 추천(따봉) 버튼 */}
-                      <div className="flex justify-end">
-                        <button 
-                          onClick={() => handleLikeComment(comment.id)}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-400 hover:text-amber-400 hover:border-amber-500/20 transition-all"
-                        >
-                          <ThumbsUp className="w-3 h-3" />
-                          <span>추천 {comment.likes}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 댓글 전송 입력 폼 */}
-                <form onSubmit={handleAddComment} className="pt-3 border-t border-slate-850/60 space-y-2">
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="닉네임"
-                      value={nicknameInput}
-                      onChange={(e) => setNicknameInput(e.target.value)}
-                      maxLength="10"
-                      className="w-1/3 bg-slate-950/80 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/50"
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="훈수 한마디 적기..."
-                      value={commentInput}
-                      onChange={(e) => setCommentInput(e.target.value)}
-                      maxLength="45"
-                      className="w-2/3 bg-slate-950/80 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/50"
-                    />
-                  </div>
-                  <button 
-                    type="submit"
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs py-1.5 rounded-lg transition"
-                  >
-                    응원 전송하기
-                  </button>
-                </form>
-
-              </div>
-
-            </div>
-
-            {/* 레이아웃 파트 2: 시간순 경기 시나리오 나열 (국기 비주얼 극대화) & 와일드카드 테이블 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* 왼쪽 2열: 시간순 시나리오 및 카드 나열 */}
-              <div className="lg:col-span-2 space-y-4">
-                <h3 className="text-sm font-extrabold text-slate-300 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-500" />
-                  시간 순서별 32강 영향 매치 타임라인
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {scenarios.map((scenario) => {
-                    const isPassedSelectedTime = scenario.timeSlot <= selectedTimeIdx;
-                    
-                    return (
-                      <div 
-                        key={scenario.id}
-                        className={`bg-slate-900/40 border rounded-xl p-4 flex flex-col justify-between transition-all ${
-                          !isPassedSelectedTime ? 'opacity-30 border-slate-900 bg-slate-950/60 grayscale' :
-                          scenario.selected !== 'pending' && scenario.options[scenario.selected].effect === 'success' ? 'border-emerald-500/30 bg-emerald-950/5 shadow-[0_0_12px_rgba(16,185,129,0.03)]' : 
-                          scenario.selected !== 'pending' && scenario.options[scenario.selected].effect === 'fail' ? 'border-red-500/30 bg-red-950/5' : 'border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          
-                          {/* 최상단 라벨 및 타임라인 배지 */}
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-[10px] font-black px-2 py-0.5 bg-slate-800 rounded-full text-slate-300 tracking-wider">
-                              조별리그 {scenario.group}조 • {timelineMilestones[scenario.timeSlot].time}
-                            </span>
-                            
-                            {!isPassedSelectedTime ? (
-                              <span className="text-[9px] text-slate-500 font-bold bg-slate-950 px-2 py-0.5 rounded-full border border-slate-900">
-                                시간축 잠김
-                              </span>
-                            ) : scenario.selected === 'pending' ? (
-                              <span className="text-[9px] text-slate-400 font-bold flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded-full border border-slate-850">
-                                <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span> 경기대기
-                              </span>
-                            ) : (
-                              <span className={`text-[9px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full border ${
-                                scenario.options[scenario.selected].effect === 'success'
-                                  ? 'text-emerald-400 bg-emerald-950 border-emerald-500/10'
-                                  : 'text-red-400 bg-red-950 border-red-500/10'
-                              }`}>
-                                {scenario.options[scenario.selected].effect === 'success' ? '한국 우세매칭' : '한국 불리매칭'}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* 국기 비주얼 극대화 매치업 표시 */}
-                          <div className="flex items-center gap-3.5 mb-2.5">
-                            <div className="flex items-center -space-x-2">
-                              <span className="text-3xl filter drop-shadow">{scenario.flagHome}</span>
-                              <span className="text-3xl filter drop-shadow">{scenario.flagAway}</span>
-                            </div>
-                            <h4 className="text-sm font-black text-white">{scenario.title}</h4>
-                          </div>
-
-                          <p className="text-slate-400 text-xs leading-relaxed mb-4">
-                            {scenario.detail}
-                          </p>
-
-                        </div>
-
-                        {/* 옵션 스위치 패널 */}
-                        <div className="space-y-2 mt-auto">
-                          {scenario.options.map((opt, idx) => {
-                            const isSelected = scenario.selected === idx;
-                            return (
-                              <button
-                                key={idx}
-                                disabled={!isPassedSelectedTime}
-                                onClick={() => handleOptionSelect(scenario.id, idx)}
-                                className={`w-full text-left p-2.5 rounded-xl border transition-all text-xs flex justify-between items-center ${
-                                  !isPassedSelectedTime ? 'bg-slate-950/20 border-slate-900 text-slate-600 cursor-not-allowed' :
-                                  isSelected
-                                    ? opt.effect === 'success'
-                                      ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
-                                      : 'bg-red-950/40 border-red-500/50 text-red-300'
-                                    : 'bg-slate-950/60 border-slate-850 hover:border-slate-700 text-slate-300'
-                                }`}
-                              >
-                                <div>
-                                  <span className="font-bold block">{opt.label}</span>
-                                  <span className={`text-[9px] block mt-0.5 ${isSelected ? 'text-slate-200' : 'text-slate-500'}`}>
-                                    {opt.desc}
-                                  </span>
-                                </div>
-                                {isPassedSelectedTime && isSelected && (
-                                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
-                                    opt.effect === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                                  }`}>
-                                    {opt.effect === 'success' ? '유리' : '불리'}
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="bg-slate-900/10 border border-slate-850 rounded-xl p-4 flex gap-3 text-xs text-slate-500">
-                  <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-slate-400 mb-1">인터랙티브 가이드라인</p>
-                    <p className="leading-relaxed">
-                      상단의 <strong>시간축 슬라이더</strong>를 움직여 원하는 시간대를 먼저 고르고, 해당 시간대 및 이전 시간대의 경기 카드를 조작해 보세요. 미래 시간대의 경기는 자동으로 비활성화 처리되어 시간대별 정확한 가상 시뮬레이션이 성립됩니다.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* 오른쪽 1열: 실시간 조별리그 3위 순위표 */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-extrabold text-slate-300 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-yellow-500" />
-                  <span>실시간 3위 테이블 ({timelineMilestones[selectedTimeIdx].time} 기준)</span>
-                </h3>
-
-                <div className="bg-slate-900/60 border border-slate-850 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl">
-                  <div className="p-3 bg-slate-950 border-b border-slate-850 text-[10px] text-slate-400 flex items-center justify-between font-bold">
-                    <span>RANK & NATION</span>
-                    <div className="flex gap-4">
-                      <span className="w-8 text-center">승점</span>
-                      <span className="w-8 text-center">득실</span>
-                      <span className="w-6 text-center">결과</span>
-                    </div>
-                  </div>
-
-                  <div className="divide-y divide-slate-850">
-                    {standings.map((team, index) => {
-                      const rank = index + 1;
-                      const isKorea = team.id === 'KOR';
-                      const isPassZone = rank <= 8;
-
-                      return (
-                        <div 
-                          key={team.id} 
-                          className={`p-2.5 flex items-center justify-between transition-all duration-300 ${
-                            isKorea 
-                              ? 'bg-slate-800/80 border-y-2 border-amber-500/60 shadow-lg relative z-10' 
-                              : isPassZone 
-                                ? 'hover:bg-slate-900/40' 
-                                : 'bg-red-950/5 hover:bg-red-950/10'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className={`w-5 text-center font-mono text-xs font-bold ${
-                              isKorea ? 'text-amber-400' : isPassZone ? 'text-slate-400' : 'text-slate-600'
-                            }`}>
-                              {rank}
-                            </span>
-                            
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className={`text-xs font-bold ${isKorea ? 'text-amber-400 font-extrabold' : 'text-slate-200'}`}>
-                                  {team.name}
-                                </span>
-                                <span className="text-[9px] font-black font-mono text-slate-500 px-1 py-0.2 bg-slate-950 border border-slate-850 rounded">
-                                  {team.group}조
-                                </span>
-                              </div>
-                              <span className="text-[9px] text-slate-500 font-medium block">
-                                {team.desc}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-4 text-xs font-semibold items-center font-mono">
-                            <span className={`w-8 text-center ${isKorea ? 'text-amber-400 font-black' : 'text-slate-300'}`}>
-                              {team.pts}
-                            </span>
-                            <span className={`w-8 text-center ${
-                              team.gd > 0 ? 'text-emerald-400' : team.gd < 0 ? 'text-red-400' : 'text-slate-400'
-                            }`}>
-                              {team.gd > 0 ? `+${team.gd}` : team.gd}
-                            </span>
-                            
-                            <span className="w-6 flex justify-center">
-                              {isPassZone ? (
-                                <span className="w-4 h-4 rounded-full bg-emerald-950 border border-emerald-500/30 text-[9px] font-black text-emerald-400 flex items-center justify-center">
-                                  P
-                                </span>
-                              ) : (
-                                <span className="w-4 h-4 rounded-full bg-red-950 border border-red-500/30 text-[9px] font-black text-red-400 flex items-center justify-center">
-                                  F
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="p-3 bg-slate-950 border-t border-slate-850 flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/30"></span> 1~8위 와일드카드 진출
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded bg-red-500/10 border border-red-500/30"></span> 9~12위 진출 탈락
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </main>
-
-          {/* 와일드카드 가이드 팝업 */}
-          {showHelpModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-                <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-amber-500" />
-                  경우의 수 및 와일드카드 규정 안내
-                </h4>
-                
-                <div className="space-y-3.5 text-xs text-slate-300 leading-relaxed">
-                  <p>
-                    이번 2026 월드컵은 참가국이 48개국으로 대폭 확대되면서, 기존과 완전히 다른 새로운 조별리그 룰이 적용됩니다.
-                  </p>
-                  
-                  <div className="bg-slate-950 p-3 rounded-lg border border-slate-850 space-y-1.5 font-medium text-slate-400">
-                    <p className="text-amber-500 font-bold mb-1">핵심 요약 규칙</p>
-                    <p>1. 각 조 1위 및 2위(총 24개팀)는 무조건 진출</p>
-                    <p>2. 조 3위 12개 국가 중 성적 상위 8개 팀만 32강 합류</p>
-                    <p>3. 조 3위 성적 비교: 승점 → 골득실 → 다득점 순</p>
-                  </div>
-
-                  <p>
-                    대한민국은 최종 성적 <strong>승점 3점, 골득실 -1</strong>로 조 3위가 이미 확정되었습니다. 앞서 타 조의 경기 결과들로 인해 다른 조 3위인 보스니아, 에콰도르, 스웨덴, 파라과이는 전부 한국을 넘어섰습니다.
-                  </p>
-                  <p>
-                    따라서 한국이 살아남기 위해선 아직 경기가 다 끝나지 않은 <strong>G, H, I, J, K, L조 중 최소 3개조 이상의 3위 성적이 한국(3점, -1) 이하가 되어야만 합니다.</strong>
-                  </p>
-                </div>
-
-                <button 
-                  onClick={() => setShowHelpModal(false)}
-                  className="mt-6 w-full py-2 bg-slate-800 hover:bg-slate-750 font-bold text-xs text-white rounded-lg transition"
-                >
-                  확인했습니다
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      );
+      ],
+      comments: [
+        { id: 1, nickname: '상암붉은악마', text: '가나 형들 크로아티아전 시원하게 부셔줘라 제발!', likes: 45, time: '3분 전' },
+        { id: 2, nickname: '킹흥민7', text: '경우의 수 실시간 확률 그래프 보니 쫄깃하네 ㅋㅋㅋ', likes: 32, time: '11분 전' },
+        { id: 3, nickname: '옵타마스터', text: 'K조 DR콩고 무승부 나면 90% 이상 진출 확실!', likes: 21, time: '20분 전' }
+      ]
+    };
+
+    // 시간 이정표 매칭 맵
+    const timeMilestones = ['14:00', '16:00', '18:00', '20:00', '00:00', '02:00'];
+
+    // 모달 핸들러
+    function openHelpModal() {
+      document.getElementById('help-modal').classList.remove('hidden');
+    }
+    function closeHelpModal() {
+      document.getElementById('help-modal').classList.add('hidden');
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    // 프리셋 일괄 입력 핸들러
+    function applyPreset(type) {
+      state.scenarios.forEach(s => {
+        if (type === 'best') {
+          s.selected = s.options.findIndex(opt => opt.effect === 'success');
+        } else if (type === 'worst') {
+          s.selected = s.options.findIndex(opt => opt.effect === 'fail');
+        } else if (type === 'cutoff') {
+          const targetEffect = [1, 2, 5].includes(s.id) ? 'success' : 'fail';
+          s.selected = s.options.findIndex(opt => opt.effect === targetEffect);
+        } else {
+          s.selected = null;
+        }
+      });
+      state.selectedTimeIdx = (type === 'reset') ? 0 : 5;
+      document.getElementById('time-slider').value = state.selectedTimeIdx;
+      updateUI();
+    }
+
+    // 타임 슬라이더 제어
+    function handleTimeSlider(val) {
+      state.selectedTimeIdx = parseInt(val);
+      document.getElementById('time-slider').value = val;
+      updateUI();
+    }
+
+    // 경기 예측 옵션 변경 핸들러
+    function handleOptionSelect(scenarioId, optionIdx) {
+      const s = state.scenarios.find(item => item.id === scenarioId);
+      if (s) {
+        s.selected = s.selected === optionIdx ? null : optionIdx;
+        updateUI();
+      }
+    }
+
+    // 댓글 추천수 증가
+    function handleLikeComment(commentId) {
+      const c = state.comments.find(item => item.id === commentId);
+      if (c) {
+        c.likes += 1;
+        renderComments();
+      }
+    }
+
+    // 댓글 전송 처리
+    function handleCommentSubmit(e) {
+      e.preventDefault();
+      const nicknameEl = document.getElementById('comment-nickname');
+      const textEl = document.getElementById('comment-text');
+      const nickname = nicknameEl.value.trim() || '익명';
+      const text = textEl.value.trim();
+
+      if (!text) return;
+
+      state.comments.unshift({
+        id: Date.now(),
+        nickname,
+        text,
+        likes: 0,
+        time: '방금 전'
+      });
+
+      nicknameEl.value = '';
+      textEl.value = '';
+      renderComments();
+    }
+
+    // 슬라이더 선택된 시점에 따른 가상 결과 판독용 헬퍼 함수
+    function getActiveStatusAtSelectedTime(groupName) {
+      const scenario = state.scenarios.find(s => s.group === groupName);
+      if (!scenario) return 'pending';
+      if (scenario.timeSlot > state.selectedTimeIdx) {
+        return 'pending'; // 아직 시간이 안 흘러 경기 전인 상태
+      }
+      if (scenario.selected === null) return 'pending';
+      return scenario.options[scenario.selected].effect;
+    }
+
+    // 확률 트렌드 곡선 동적 생성 연산
+    function calculateProbabilityTrend() {
+      const baseProb = 67.93; // 14:00 baseline
+      const weights = {
+        G: { success: 9.5, fail: -15.0 },
+        H: { success: 9.5, fail: -15.0 },
+        I: { success: 4.5, fail: -10.0 },
+        J: { success: 4.5, fail: -10.0 },
+        K: { success: 9.5, fail: -15.0 },
+        L: { success: 10.5, fail: -15.0 },
+      };
+
+      const getEffectValue = (groupName) => {
+        const s = state.scenarios.find(item => item.group === groupName);
+        if (!s || s.selected === null) return 0;
+        const effect = s.options[s.selected].effect;
+        return weights[groupName][effect];
+      };
+
+      let prob0 = baseProb;
+      let prob1 = Math.max(0, Math.min(100, prob0 + getEffectValue('G')));
+      let prob2 = Math.max(0, Math.min(100, prob1 + getEffectValue('H')));
+      let prob3 = Math.max(0, Math.min(100, prob2 + getEffectValue('I') + getEffectValue('J')));
+      let prob4 = Math.max(0, Math.min(100, prob3 + getEffectValue('K')));
+
+      let prob5;
+      const successes = state.scenarios.filter(s => s.selected !== null && s.options[s.selected].effect === 'success').length;
+      const fails = state.scenarios.filter(s => s.selected !== null && s.options[s.selected].effect === 'fail').length;
+      const totalSelected = successes + fails;
+
+      if (totalSelected === 6) {
+        prob5 = successes >= 3 ? 100 : 0;
+      } else {
+        prob5 = Math.max(0, Math.min(100, prob4 + getEffectValue('L')));
+        if (successes >= 3) prob5 = Math.max(92, prob5);
+        if (fails > 3) prob5 = Math.min(8, prob5);
+      }
+
+      return [
+        { time: '14:00', val: parseFloat(prob0.toFixed(1)) },
+        { time: '16:00', val: parseFloat(prob1.toFixed(1)) },
+        { time: '18:00', val: parseFloat(prob2.toFixed(1)) },
+        { time: '20:00', val: parseFloat(prob3.toFixed(1)) },
+        { time: '00:00', val: parseFloat(prob4.toFixed(1)) },
+        { time: '02:00', val: parseFloat(prob5.toFixed(1)) }
+      ];
+    }
+
+    // 12개조 3위 가상 순위표 연산 및 소팅 정렬
+    function calculateStandings() {
+      const baseTeams = [
+        { id: 'KOR', name: '대한민국 🇰🇷', group: 'A', pts: 3, gd: -1, desc: 'A조 최종' },
+        { id: 'BIH', name: '보스니아 🇧🇦', group: 'B', pts: 4, gd: 0, desc: 'B조 최종' },
+        { id: 'SCO', name: '스코틀랜드 🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C', pts: 3, gd: -3, desc: 'C조 (한국 우세)' },
+        { id: 'PRY', name: '파라과이 🇵🇾', group: 'D', pts: 4, gd: -1, desc: 'D조 최종' },
+        { id: 'ECU', name: '에콰도르 🇪🇨', group: 'E', pts: 4, gd: 0, desc: 'E조 최종' },
+        { id: 'SWE', name: '스웨덴 🇸🇪', group: 'F', pts: 4, gd: 1, desc: 'F조 최종' },
+      ];
+
+      const statusG = getActiveStatusAtSelectedTime('G');
+      const statusH = getActiveStatusAtSelectedTime('H');
+      const statusI = getActiveStatusAtSelectedTime('I');
+      const statusJ = getActiveStatusAtSelectedTime('J');
+      const statusK = getActiveStatusAtSelectedTime('K');
+      const statusL = getActiveStatusAtSelectedTime('L');
+
+      let teamG = { id: 'G', name: 'G조 3위 (이란/벨기에)', group: 'G', pts: 3, gd: 0, desc: '대기 중' };
+      if (statusG === 'success') {
+        teamG = { id: 'G', name: '이란 🇮🇷', group: 'G', pts: 2, gd: -2, desc: '이란 패배' };
+      } else if (statusG === 'fail') {
+        teamG = { id: 'G', name: '벨기에 🇧🇪', group: 'G', pts: 4, gd: 0, desc: '이란 선전' };
+      }
+
+      let teamH = { id: 'H', name: 'H조 3위 (우루과이)', group: 'H', pts: 3, gd: 0, desc: '대기 중' };
+      if (statusH === 'success') {
+        teamH = { id: 'H', name: '우루과이 🇺🇾', group: 'H', pts: 2, gd: -2, desc: '우루과이 패배' };
+      } else if (statusH === 'fail') {
+        teamH = { id: 'H', name: '우루과이 🇺🇾', group: 'H', pts: 4, gd: 0, desc: '우루과이 선방' };
+      }
+
+      let teamI = { id: 'I', name: 'I조 3위 (이라크/세네갈)', group: 'I', pts: 3, gd: 0, desc: '대기 중' };
+      if (statusI === 'success') {
+        teamI = { id: 'I', name: '세네갈 🇸🇳', group: 'I', pts: 3, gd: -2, desc: '1골차 접전승' };
+      } else if (statusI === 'fail') {
+        teamI = { id: 'I', name: '이라크 🇮🇶', group: 'I', pts: 4, gd: 1, desc: '이라크 선방' };
+      }
+
+      let teamJ = { id: 'J', name: 'J조 3위 (오스트리아/알제리)', group: 'J', pts: 3, gd: 0, desc: '대기 중' };
+      if (statusJ === 'success') {
+        teamJ = { id: 'J', name: '알제리 🇩🇿', group: 'J', pts: 3, gd: -2, desc: '오스트리아 승' };
+      } else if (statusJ === 'fail') {
+        teamJ = { id: 'J', name: '오스트리아 🇦🇹', group: 'J', pts: 4, gd: 1, desc: '알제리 접전승' };
+      }
+
+      let teamK = { id: 'K', name: 'K조 3위 (대기중)', group: 'K', pts: 3, gd: 0, desc: '대기 중' };
+      if (statusK === 'success') {
+        teamK = { id: 'K', name: 'DR콩고 🇨🇩', group: 'K', pts: 2, gd: -1, desc: 'DR콩고 무승부 이하' };
+      } else if (statusK === 'fail') {
+        teamK = { id: 'K', name: 'DR콩고 🇨🇩', group: 'K', pts: 4, gd: 1, desc: 'DR콩고 승리' };
+      }
+
+      let teamL = { id: 'L', name: 'L조 3위 (대기중)', group: 'L', pts: 3, gd: 0, desc: '대기 중' };
+      if (statusL === 'success') {
+        teamL = { id: 'L', name: '크로아티아 🇭🇷', group: 'L', pts: 3, gd: -2, desc: '크로아티아 대패' };
+      } else if (statusL === 'fail') {
+        teamL = { id: 'L', name: '크로아티아 🇭🇷', group: 'L', pts: 4, gd: 0, desc: '크로아티아 무승부 이상' };
+      }
+
+      const allTeams = [...baseTeams, teamG, teamH, teamI, teamJ, teamK, teamL];
+
+      return allTeams.sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        return b.gd - a.gd;
+      });
+    }
+
+    // --- DOM 렌더러 함수들 ---
+
+    // 1. 경기 예측 카드 렌더링
+    function renderMatchCards() {
+      const container = document.getElementById('match-cards-container');
+      container.innerHTML = '';
+
+      state.scenarios.forEach(s => {
+        const isPassedSelectedTime = s.timeSlot <= state.selectedTimeIdx;
+        
+        let cardBgClass = 'border-slate-850 bg-slate-950/40';
+        let headerLabelClass = 'text-slate-400 bg-slate-800';
+        let titleClass = 'text-slate-200';
+        let matchLabelText = '';
+        let matchLabelColor = '';
+
+        if (!isPassedSelectedTime) {
+          cardBgClass = 'opacity-30 border-slate-900 bg-slate-950/20 grayscale';
+          titleClass = 'text-slate-500';
+        } else if (s.selected !== null) {
+          const opt = s.options[s.selected];
+          if (opt.effect === 'success') {
+            cardBgClass = 'border-emerald-500/20 bg-emerald-950/5';
+            matchLabelText = '한국 유리';
+            matchLabelColor = 'text-emerald-400';
+          } else {
+            cardBgClass = 'border-red-500/20 bg-red-950/5';
+            matchLabelText = '한국 불리';
+            matchLabelColor = 'text-red-400';
+          }
+        }
+
+        // 각 예측 옵션들의 HTML 생성
+        let optionsHTML = '';
+        s.options.forEach((opt, idx) => {
+          const isSelected = s.selected === idx;
+          let btnClass = 'bg-slate-900/60 border-slate-850 text-slate-400 hover:border-slate-700';
+          
+          if (isSelected) {
+            btnClass = opt.effect === 'success' 
+              ? 'bg-emerald-950 border-emerald-500/40 text-emerald-300 shadow-md' 
+              : 'bg-red-950 border-red-500/40 text-red-300 shadow-md';
+          }
+
+          optionsHTML += `
+            <button
+              ${isPassedSelectedTime ? '' : 'disabled'}
+              onclick="handleOptionSelect(${s.id}, ${idx})"
+              class="py-1.5 px-1 rounded text-center text-[10px] font-bold border transition-all ${btnClass}"
+              title="${opt.desc}"
+            >
+              ${opt.label.split(' ')[0]}
+            </button>
+          `;
+        });
+
+        const cardHTML = `
+          <div class="border rounded-lg p-3.5 flex flex-col justify-between transition-all ${cardBgClass}">
+            <div class="flex justify-between items-center text-[9px] mb-1.5">
+              <span class="font-extrabold px-2 py-0.5 rounded font-mono ${headerLabelClass}">
+                ${s.group}조 • ${timeMilestones[s.timeSlot]}
+              </span>
+              ${isPassedSelectedTime && s.selected !== null ? `<span class="font-bold text-[10px] ${matchLabelColor}">${matchLabelText}</span>` : ''}
+            </div>
+
+            <div class="flex items-center gap-2 mb-2.5">
+              <div class="flex items-center -space-x-1 shrink-0">
+                <span class="text-3xl filter drop-shadow">${s.flagHome}</span>
+                <span class="text-3xl filter drop-shadow">${s.flagAway}</span>
+              </div>
+              <h4 class="text-[11px] md:text-xs font-black truncate ${titleClass}">${s.title}</h4>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5 mt-auto">
+              ${optionsHTML}
+            </div>
+          </div>
+        `;
+        container.innerHTML += cardHTML;
+      });
+    }
+
+    // 2. 실시간 조별 순위표 렌더링
+    function renderStandings() {
+      const tbody = document.getElementById('standings-tbody');
+      tbody.innerHTML = '';
+      const list = calculateStandings();
+
+      list.forEach((team, idx) => {
+        const rank = idx + 1;
+        const isKorea = team.id === 'KOR';
+        const isPassZone = rank <= 8;
+
+        const rowHTML = `
+          <div class="p-1.5 flex items-center justify-between transition-all ${
+            isKorea ? 'bg-slate-800 border-y border-amber-500/50 shadow-md font-bold' : 'hover:bg-slate-900/20'
+          }">
+            <div class="flex items-center gap-1.5">
+              <span class="w-4 text-center font-mono text-[10px] ${isKorea ? 'text-amber-400 font-bold' : 'text-slate-600'}">${rank}</span>
+              <span class="${isKorea ? 'text-amber-400 font-extrabold' : 'text-slate-300'}">${team.name}</span>
+              <span class="text-[8px] text-slate-500 px-0.5 bg-slate-950 border border-slate-850 rounded font-mono">${team.group}조</span>
+            </div>
+
+            <div class="flex gap-5 font-mono font-bold">
+              <span class="w-7 text-center">${team.pts}</span>
+              <span class="w-7 text-center ${team.gd > 0 ? 'text-emerald-400' : team.gd < 0 ? 'text-red-400' : 'text-slate-500'}">
+                ${team.gd > 0 ? `+${team.gd}` : team.gd}
+              </span>
+              <span class="w-5 flex justify-center">
+                <span class="w-2.5 h-2.5 rounded-full ${isPassZone ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-red-500'} opacity-80"></span>
+              </span>
+            </div>
+          </div>
+        `;
+        tbody.innerHTML += rowHTML;
+      });
+    }
+
+    // 3. 댓글 섹션 렌더링
+    function renderComments() {
+      const listEl = document.getElementById('comments-list');
+      listEl.innerHTML = '';
+      
+      document.getElementById('comments-count').innerText = `${state.comments.length}명 참여중`;
+
+      state.comments.forEach(comment => {
+        const itemHTML = `
+          <div class="bg-slate-950/60 rounded-md p-2 border border-slate-850/40">
+            <div class="flex justify-between items-center text-[9px] mb-1">
+              <span class="font-extrabold text-amber-400">${comment.nickname}</span>
+              <span class="text-[8px] text-slate-500">${comment.time}</span>
+            </div>
+            <p class="text-slate-300 leading-normal text-[10px]">${comment.text}</p>
+            <div class="flex justify-end mt-1">
+              <button 
+                onclick="handleLikeComment(${comment.id})"
+                class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400 hover:text-amber-400 transition-colors"
+              >
+                👍 <span>${comment.likes}</span>
+              </button>
+            </div>
+          </div>
+        `;
+        listEl.innerHTML += itemHTML;
+      });
+    }
+
+    // 4. 주식형 실시간 SVG 라인 차트 드로잉
+    function renderSVGChart() {
+      const trend = calculateProbabilityTrend();
+      const xCoords = [35, 120, 205, 290, 375, 465];
+      
+      const points = trend.map((pt, i) => {
+        const x = xCoords[i];
+        const y = 95 - (pt.val / 100) * 75;
+        return { x, y, val: pt.val, time: pt.time };
+      });
+
+      // SVG path 생성
+      const linePath = points.reduce((path, pt, i) => {
+        return path + (i === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`);
+      }, '');
+
+      const areaPath = linePath + ` L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`;
+
+      document.getElementById('chart-area').setAttribute('d', areaPath);
+      document.getElementById('chart-line').setAttribute('d', linePath);
+
+      // SVG 마커 드로잉
+      const markerGroup = document.getElementById('chart-markers');
+      markerGroup.innerHTML = '';
+
+      points.forEach((pt, i) => {
+        const isSelected = i === state.selectedTimeIdx;
+        
+        let markerHTML = '';
+        if (isSelected) {
+          markerHTML += `<circle cx="${pt.x}" cy="${pt.y}" r="6" fill="#f59e0b" fill-opacity="0.25" class="animate-ping" />`;
+        }
+        markerHTML += `
+          <circle cx="${pt.x}" cy="${pt.y}" r="${isSelected ? '4' : '2.5'}" fill="${isSelected ? '#f59e0b' : '#334155'}" stroke="#020617" stroke-width="1.2" />
+          <text x="${pt.x}" y="${pt.y - 8}" fill="${isSelected ? '#f59e0b' : '#64748b'}" font-size="7.5" font-weight="bold" text-anchor="middle" font-family="monospace">${pt.val}%</text>
+          <text x="${pt.x}" y="108" fill="${isSelected ? '#f59e0b' : '#475569'}" font-size="7" font-weight="${isSelected ? 'bold' : 'normal'}" text-anchor="middle">${pt.time}</text>
+        `;
+        markerGroup.innerHTML += markerHTML;
+      });
+    }
+
+    // 5. 종합 업데이트 디스패처 (State -> UI 동기화)
+    function updateUI() {
+      const trend = calculateProbabilityTrend();
+      const currentProbability = trend[state.selectedTimeIdx].val;
+      const initialProbability = trend[0].val;
+      const probabilityDiff = parseFloat((currentProbability - initialProbability).toFixed(1));
+
+      // 헤더 및 지표 바인딩
+      document.getElementById('giant-prob').innerText = `${currentProbability}%`;
+      document.getElementById('sync-time-label').innerText = timeMilestones[state.selectedTimeIdx];
+
+      const diffEl = document.getElementById('giant-diff');
+      if (probabilityDiff >= 0) {
+        diffEl.innerText = `▲ +${probabilityDiff}%`;
+        diffEl.className = 'text-[10px] font-bold font-mono px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-950/30';
+      } else {
+        diffEl.innerText = `▼ ${probabilityDiff}%`;
+        diffEl.className = 'text-[10px] font-bold font-mono px-1.5 py-0.5 rounded text-red-400 bg-red-950/30';
+      }
+
+      // 서브 뷰 렌더러 기동
+      renderMatchCards();
+      renderStandings();
+      renderComments();
+      renderSVGChart();
+    }
+
+    // 초기 가동 진입점
+    window.addEventListener('DOMContentLoaded', () => {
+      updateUI();
+    });
   </script>
 </body>
 </html>
+
+```
